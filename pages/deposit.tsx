@@ -1,8 +1,46 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Image from 'next/image';
+import DurationSelect from '../components/DurationSelect';
+import DatePickerInput from '../components/DatePickerInput';
+
+// Функция для получения правильного окончания
+const getWordForm = (number: number, type: 'year' | 'month'): string => {
+  const lastDigit = number % 10;
+  const lastTwoDigits = number % 100;
+
+  if (type === 'year') {
+    if (lastTwoDigits >= 11 && lastTwoDigits <= 19) return 'лет';
+    if (lastDigit === 1) return 'год';
+    if (lastDigit >= 2 && lastDigit <= 4) return 'года';
+    return 'лет';
+  } else {
+    if (lastTwoDigits >= 11 && lastTwoDigits <= 19) return 'месяцев';
+    if (lastDigit === 1) return 'месяц';
+    if (lastDigit >= 2 && lastDigit <= 4) return 'месяца';
+    return 'месяцев';
+  }
+};
 
 export default function DepositPage() {
+  const [term, setTerm] = useState('1');
+  const [periodType, setPeriodType] = useState<'year' | 'month'>('year');
+  const [startDate, setStartDate] = useState(new Date());
+
+  // Получаем текущее окончание в зависимости от числа
+  const currentPeriod = getWordForm(parseInt(term) || 0, periodType);
+
+  const handleTermChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/[^0-9]/g, '');
+    if (value === '' || parseInt(value) <= 100) {
+      setTerm(value);
+    }
+  };
+
+  const handlePeriodChange = (value: string) => {
+    setPeriodType(value === 'год' || value === 'года' || value === 'лет' ? 'year' : 'month');
+  };
+
   return (
     <>
       <Head>
@@ -36,11 +74,13 @@ export default function DepositPage() {
             {/* Правая колонка с картинкой */}
             <div className="hidden lg:block lg:col-span-7 relative h-[400px]">
               <Image 
-                src="/img/cards.png"
+                src="/calc/img/cards.png"
                 alt="Банковские карты"
-                layout="fill"
-                objectFit="contain"
-                objectPosition="right center"
+                fill
+                style={{
+                  objectFit: 'contain',
+                  objectPosition: 'right center'
+                }}
                 priority
               />
             </div>
@@ -74,16 +114,16 @@ export default function DepositPage() {
                           <div className="relative">
                             <input
                               type="text"
-                              defaultValue="1"
+                              value={term}
+                              onChange={handleTermChange}
                               className="w-full h-[60px] pl-10 rounded-[30px] bg-[#E9F5FF] border-0 focus:ring-2 focus:ring-accent-blue text-[22px]"
                             />
                             <div className="absolute inset-y-0 right-0 flex items-center">
-                              <select
-                                className="h-full rounded-r-[30px] border-0 bg-transparent py-0 pl-2 pr-7 text-gray-500 focus:ring-2 focus:ring-inset focus:ring-accent-blue text-[22px]"
-                              >
-                                <option>год</option>
-                                <option>месяц</option>
-                              </select>
+                              <DurationSelect 
+                                value={currentPeriod} 
+                                onChange={handlePeriodChange}
+                                term={term}
+                              />
                             </div>
                           </div>
                         </div>
@@ -105,11 +145,7 @@ export default function DepositPage() {
                           <label className="block text-label text-gray-700 pl-10">
                             Дата открытия
                           </label>
-                          <input
-                            type="date"
-                            defaultValue="2025-05-21"
-                            className="w-full h-[60px] pl-10 rounded-[30px] bg-[#E9F5FF] border-0 focus:ring-2 focus:ring-accent-blue text-[22px]"
-                          />
+                          <DatePickerInput value={startDate} onChange={setStartDate} />
                         </div>
 
                         {/* Чекбоксы */}
