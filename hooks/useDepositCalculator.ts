@@ -133,17 +133,29 @@ export const useDepositCalculator = () => {
 
   // Обработчик изменения капитализации
   const handleCapitalizationChange = (value: boolean) => {
-    setIsCapitalized(value);
-    if (!value) {
+    if (value) {
+      // Если включаем капитализацию, сразу устанавливаем месячный период по умолчанию
+      setIsCapitalized(true);
+      setCapitalizationPeriod('monthly');
+    } else {
+      // Если выключаем, сбрасываем оба значения
+      setIsCapitalized(false);
       setCapitalizationPeriod(null);
     }
   };
 
   // Расчет процентов и графика
   useEffect(() => {
+    console.log('=== ВЫЗОВ USEEFFECT ===');
+    console.log('isCapitalized:', isCapitalized);
+    console.log('capitalizationPeriod:', capitalizationPeriod);
+    console.log('Все зависимости:', { amount, term, periodType, rate, startDate });
+
     const calculateDeposit = () => {
+      console.log('=== НАЧАЛО РАСЧЕТА ===');
       // Проверяем наличие ошибок
       if (Object.values(errors).some(error => error !== undefined)) {
+        console.log('Есть ошибки валидации, прерываем расчет');
         return;
       }
 
@@ -153,8 +165,15 @@ export const useDepositCalculator = () => {
       const years = months / 12;
 
       if (isNaN(depositAmount) || isNaN(depositRate) || months <= 0) {
+        console.log('Некорректные входные данные, прерываем расчет');
         return;
       }
+
+      console.log('Входные данные для расчета:');
+      console.log('- Сумма:', depositAmount);
+      console.log('- Ставка:', depositRate);
+      console.log('- Месяцев:', months);
+      console.log('- Лет:', years);
 
       let totalAmount = depositAmount;
       let totalProfit = 0;
@@ -170,64 +189,67 @@ export const useDepositCalculator = () => {
       });
 
       if (isCapitalized && capitalizationPeriod) {
-        // Расчет с капитализацией
-        const periodsInYear = {
-          monthly: 12,
-          quarterly: 4,
-          yearly: 1
-        }[capitalizationPeriod];
+        console.log('=== ВХОДНЫЕ ДАННЫЕ ===');
+        console.log('Начальная сумма:', depositAmount);
+        console.log('Срок в месяцах:', months);
+        console.log('Ставка:', depositRate);
+        console.log('Период капитализации:', capitalizationPeriod);
+        console.log('Дата начала:', startDate);
 
-        const periodRate = depositRate / 100 / periodsInYear;
-        const totalPeriods = (months / 12) * periodsInYear;
+        const monthsInPeriod = { monthly: 1, quarterly: 3, yearly: 12 }[capitalizationPeriod];
         
-        // Расчет итоговой суммы по формуле сложных процентов
-        totalAmount = depositAmount * Math.pow(1 + periodRate, totalPeriods);
+        let currentAmount = depositAmount;
+        let currentDateCalc = new Date(startDate);
+        let remainingMonths = months;
+
+        // Используем правильную формулу сложного процента
+        // Для разных периодов капитализации используем разные подходы
+        if (capitalizationPeriod === 'monthly') {
+          // Ежемесячная капитализация: FV = PV * (1 + r/12)^(12*t)
+          totalAmount = depositAmount * Math.pow(1 + depositRate / 100 / 12, months);
+        } else if (capitalizationPeriod === 'quarterly') {
+          // Ежеквартальная капитализация: FV = PV * (1 + r/4)^(4*t)
+          const quarters = months / 3;
+          totalAmount = depositAmount * Math.pow(1 + depositRate / 100 / 4, quarters);
+        } else if (capitalizationPeriod === 'yearly') {
+          // Ежегодная капитализация: FV = PV * (1 + r)^t
+          totalAmount = depositAmount * Math.pow(1 + depositRate / 100, years);
+        }
+        
         totalProfit = totalAmount - depositAmount;
 
-        // Построение графика платежей
-        let currentBalance = depositAmount;
-        const periodMonths = {
-          monthly: 1,
-          quarterly: 3,
-          yearly: 12
-        }[capitalizationPeriod];
-
-        for (let i = 1; i <= months; i++) {
-          currentDate = new Date(startDate);
-          currentDate.setMonth(currentDate.getMonth() + i);
-
-          const isCapitalizationMonth = i % periodMonths === 0;
+        // Создаём упрощённый график для отображения
+        const periodsCount = Math.ceil(months / monthsInPeriod);
+        for (let i = 1; i <= periodsCount; i++) {
+          const periodMonths = Math.min(i * monthsInPeriod, months);
+          const periodAmount = depositAmount * Math.pow(1 + depositRate / 100 / (12 / monthsInPeriod), periodMonths / monthsInPeriod * (12 / monthsInPeriod));
+          const periodInterest = i === 1 ? periodAmount - depositAmount : periodAmount - scheduleItems[scheduleItems.length - 1].balance;
           
-          if (isCapitalizationMonth) {
-            // Расчет процентов на дату капитализации
-            const periodsCompleted = i / periodMonths;
-            const newBalance = depositAmount * Math.pow(1 + periodRate, periodsCompleted);
-            const interest = newBalance - currentBalance;
-            currentBalance = newBalance;
-            
-            scheduleItems.push({
-              date: currentDate.toLocaleDateString('ru-RU'),
-              interest,
-              balance: currentBalance,
-              isCapitalization: true
-            });
-          } else {
-            // В промежуточные месяцы показываем начисленные проценты без капитализации
-            const monthlyRate = depositRate / 100 / 12;
-            const interest = currentBalance * monthlyRate;
-            
-            scheduleItems.push({
-              date: currentDate.toLocaleDateString('ru-RU'),
-              interest,
-              balance: currentBalance,
-              isCapitalization: false
-            });
-          }
+          currentDate = new Date(startDate);
+          currentDate.setMonth(currentDate.getMonth() + periodMonths);
+          
+          scheduleItems.push({
+            date: currentDate.toLocaleDateString('ru-RU'),
+            interest: periodInterest,
+            balance: periodAmount,
+            isCapitalization: true
+          });
         }
 
-        // Расчет эффективной ставки
-        const years = months / 12;
-        setEffectiveRate(((Math.pow(totalAmount / depositAmount, 1 / years) - 1) * 100));
+        console.log('=== РЕЗУЛЬТАТЫ РАСЧЕТА ===');
+        console.log('Итоговая сумма:', totalAmount);
+        console.log('Прибыль:', totalProfit);
+        console.log('Срок в годах:', years);
+        
+        // Расчет простой среднегодовой доходности
+        if (years > 0) {
+          // Эффективная ставка = (общий доход / начальная сумма) / количество лет
+          const averageAnnualReturn = (totalProfit / depositAmount / years) * 100;
+          console.log('Простая среднегодовая доходность:', averageAnnualReturn);
+          setEffectiveRate(Math.round(averageAnnualReturn * 100) / 100);
+        } else {
+          setEffectiveRate(Number(depositRate));
+        }
       } else {
         // Расчет без капитализации
         const yearlyProfit = depositAmount * (depositRate / 100);
@@ -235,6 +257,9 @@ export const useDepositCalculator = () => {
         totalProfit = monthlyProfit * months;
         totalAmount = depositAmount + totalProfit;
 
+        console.log("Расчет без капитализации");
+
+        // Расчет графика платежей
         for (let i = 1; i <= months; i++) {
           currentDate = new Date(startDate);
           currentDate.setMonth(currentDate.getMonth() + i);
@@ -247,8 +272,15 @@ export const useDepositCalculator = () => {
           });
         }
 
-        // Для вклада без капитализации эффективная ставка равна номинальной
-        setEffectiveRate(depositRate);
+        // Расчет простой среднегодовой доходности для случая без капитализации
+        if (years > 0) {
+          // Эффективная ставка = (общий доход / начальная сумма) / количество лет
+          const averageAnnualReturn = (totalProfit / depositAmount / years) * 100;
+          console.log('Простая среднегодовая доходность без капитализации:', averageAnnualReturn);
+          setEffectiveRate(Math.round(averageAnnualReturn * 100) / 100);
+        } else {
+          setEffectiveRate(Number(depositRate));
+        }
       }
 
       setTotal(totalAmount);

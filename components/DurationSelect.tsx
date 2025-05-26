@@ -1,4 +1,4 @@
-import { Fragment } from 'react'
+import { Fragment, useState, useEffect } from 'react'
 import { Listbox, Transition } from '@headlessui/react'
 import { ChevronDownIcon } from '@heroicons/react/20/solid'
 
@@ -20,6 +20,14 @@ const getWordForm = (number: number, type: 'year' | 'month'): string => {
   }
 };
 
+// Функция для получения адаптивных CSS классов
+const getSelectClasses = (windowWidth: number): string => {
+  const isMobile = windowWidth < 768;
+  const minWidth = isMobile ? 'min-w-[88px]' : 'min-w-[80px]';
+  
+  return `w-fit ${minWidth} max-w-[200px] transition-all duration-200 ease-in-out`;
+};
+
 interface DurationSelectProps {
   value: string;
   onChange: (value: string) => void;
@@ -27,6 +35,20 @@ interface DurationSelectProps {
 }
 
 export default function DurationSelect({ value, onChange, term }: DurationSelectProps) {
+  const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1024);
+
+  // Отслеживаем изменения размера окна
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
+    }
+  }, []);
+
   const number = parseInt(term) || 0;
   
   const periods = [
@@ -43,15 +65,18 @@ export default function DurationSelect({ value, onChange, term }: DurationSelect
     }
   }) || periods[0];
 
+  // Получаем адаптивные CSS классы
+  const selectClasses = getSelectClasses(windowWidth);
+
   return (
     <Listbox value={selected} onChange={(newValue) => onChange(newValue.name)}>
       <div className="relative flex h-[60px]">
         <div className="flex-1 bg-[#E9F5FF] rounded-l-[30px]" />
-        <div className="w-[160px]">
+        <div className={selectClasses}>
           <Listbox.Button className="w-full h-full rounded-[30px] bg-[#CEE1F0] py-0 pl-6 pr-10 text-gray-900 focus:ring-2 focus:ring-inset focus:ring-accent-blue text-[22px] flex items-center">
-            <span className="block truncate">{value}</span>
+            <span className="block truncate leading-none -translate-y-[2px]">{value}</span>
             <ChevronDownIcon
-              className="h-5 w-5 text-gray-900 absolute right-4"
+              className="h-5 w-5 text-[#96A8D4] absolute right-4"
               aria-hidden="true"
             />
           </Listbox.Button>
@@ -62,7 +87,7 @@ export default function DurationSelect({ value, onChange, term }: DurationSelect
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <Listbox.Options className="absolute right-0 z-10 mt-2 w-[160px] overflow-hidden rounded-[15px] bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+          <Listbox.Options className={`absolute right-0 z-10 mt-2 overflow-hidden rounded-[15px] bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none ${selectClasses}`}>
             {periods.map((period) => (
               <Listbox.Option
                 key={period.id}

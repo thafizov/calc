@@ -204,17 +204,16 @@ export default function DepositPage() {
                             <div className="block text-label text-gray-700 pl-10 invisible">
                               &nbsp;
                             </div>
-                            <div className="h-[60px] flex items-center">
-                              <label className="flex items-start space-x-3 cursor-pointer">
-                                <input
-                                  type="checkbox"
-                                  checked={isCapitalized}
-                                  onChange={(e) => setIsCapitalized(e.target.checked)}
-                                  className="h-[20px] w-[20px] min-w-[20px] min-h-[20px] rounded border-2 border-[#CEE1F0] text-[#CEE1F0] focus:ring-2 focus:ring-[#CEE1F0] checked:bg-[#CEE1F0] checked:hover:bg-[#CEE1F0]"
-                                />
-                                <span className="text-[18px] text-gray-700 -mt-[3px]">
-                                  Начисление процентов с&nbsp;учетом капитализации
-                                </span>
+                            <div className="h-[60px] flex items-start relative pt-[2px]">
+                              <input
+                                id="capitalization-checkbox"
+                                type="checkbox"
+                                checked={isCapitalized}
+                                onChange={(e) => setIsCapitalized(e.target.checked)}
+                                className="h-[14px] w-[14px] min-w-[14px] min-h-[14px] rounded border-2 border-[#CEE1F0] text-[#CEE1F0] focus:ring-2 focus:ring-[#CEE1F0] checked:bg-[#CEE1F0] checked:hover:bg-[#CEE1F0] cursor-pointer absolute left-0 top-[2px]"
+                              />
+                              <label htmlFor="capitalization-checkbox" className="text-[18px] text-gray-700 cursor-pointer absolute left-10 top-[-2px]">
+                                Начисление процентов с&nbsp;учетом капитализации
                               </label>
                             </div>
                           </div>

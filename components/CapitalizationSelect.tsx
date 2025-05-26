@@ -1,4 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { Fragment, useEffect } from 'react';
+import { Listbox, Transition } from '@headlessui/react';
+import { ChevronDownIcon } from '@heroicons/react/20/solid';
 import { CapitalizationPeriod } from '../hooks/useDepositCalculator';
 
 interface CapitalizationSelectProps {
@@ -19,37 +21,50 @@ const CapitalizationSelect: React.FC<CapitalizationSelectProps> = ({ value, onCh
     if (!value && isCapitalized) {
       onChange('monthly');
     }
-  }, [value, onChange]);
+  }, [value, onChange, isCapitalized]);
+
+  // Находим выбранную опцию
+  const selectedOption = options.find(option => option.value === value) || options[0];
 
   return (
-    <div className="relative">
-      <select
-        value={value || 'monthly'}
-        onChange={(e) => onChange(e.target.value as CapitalizationPeriod)}
-        className="w-full h-[60px] pl-10 rounded-[30px] bg-[#E9F5FF] border-0 focus:ring-2 focus:ring-accent-blue text-[22px] appearance-none cursor-pointer"
-      >
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-      <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
-        <svg
-          className="h-5 w-5 text-gray-400"
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 20 20"
-          fill="currentColor"
-          aria-hidden="true"
-        >
-          <path
-            fillRule="evenodd"
-            d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-            clipRule="evenodd"
+    <Listbox value={selectedOption} onChange={(newValue) => onChange(newValue.value as CapitalizationPeriod)}>
+      <div className="relative">
+        <Listbox.Button className="w-full h-[60px] pl-10 pr-10 rounded-[30px] bg-[#E9F5FF] border-0 focus:ring-2 focus:ring-accent-blue text-[22px] flex items-center justify-between cursor-pointer hover:bg-[#CEE1F0] transition-colors">
+          <span className="block truncate text-left">{selectedOption.label}</span>
+          <ChevronDownIcon
+            className="h-5 w-5 text-[#96A8D4] flex-shrink-0"
+            aria-hidden="true"
           />
-        </svg>
+        </Listbox.Button>
+        
+        <Transition
+          as={Fragment}
+          leave="transition ease-in duration-100"
+          leaveFrom="opacity-100"
+          leaveTo="opacity-0"
+        >
+          <Listbox.Options className="absolute left-0 right-0 z-10 mt-2 overflow-hidden rounded-[15px] bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+            {options.map((option) => (
+              <Listbox.Option
+                key={option.value}
+                className={({ active }) =>
+                  `relative cursor-pointer select-none py-3 pl-10 pr-4 ${
+                    active ? 'bg-[#E9F5FF] text-accent-blue' : 'text-gray-900'
+                  }`
+                }
+                value={option}
+              >
+                {({ selected }) => (
+                  <span className={`block truncate text-[18px] ${selected ? 'font-medium text-accent-blue' : 'font-normal'}`}>
+                    {option.label}
+                  </span>
+                )}
+              </Listbox.Option>
+            ))}
+          </Listbox.Options>
+        </Transition>
       </div>
-    </div>
+    </Listbox>
   );
 };
 
