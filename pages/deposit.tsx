@@ -40,6 +40,7 @@ export default function DepositPage() {
     total,
     profit,
     schedule,
+    totalInterest,
     isVisible,
     errors,
     effectiveRate,
@@ -315,6 +316,12 @@ export default function DepositPage() {
                               <td className="py-4 px-0 text-right whitespace-nowrap">{formatNumber(item.balance)} ₽</td>
                             </tr>
                           ))}
+                          {/* Итоговая строка с общей суммой начислений */}
+                          <tr className="border-t-2 border-accent-blue bg-blue-50">
+                            <td className="py-4 px-0 font-bold text-accent-blue">Итого начислено:</td>
+                            <td className="py-4 px-6 text-right whitespace-nowrap font-bold text-accent-blue">{formatNumber(totalInterest)} ₽</td>
+                            <td className="py-4 px-0"></td>
+                          </tr>
                         </tbody>
                       </table>
                     </div>
