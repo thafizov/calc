@@ -26,4 +26,12 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
-next-env.d.ts 
+next-env.d.ts
+
+# prompts and setup files
+prompts/
+setup/
+*.prompt
+*.setup
+SETUP.md
+PROMPTS.md 

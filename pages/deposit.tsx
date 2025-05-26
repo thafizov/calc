@@ -78,7 +78,7 @@ export default function DepositPage() {
       </Head>
       
       <main className="min-h-screen bg-deep-blue">
-        <div className="relative py-8 md:py-10 lg:py-10 laptop:py-12 px-4 max-w-container mx-auto">
+        <div className="relative py-8 md:py-10 lg:py-10 laptop:py-12 px-4 max-w-container mx-auto lg:scale-90 lg:origin-top">
           <div className="block md:grid md:grid-cols-2 lg:grid-cols-12 gap-4 md:gap-6 lg:gap-8">
             {/* Левая колонка с текстом */}
             <div className="lg:col-span-5">
@@ -115,162 +115,158 @@ export default function DepositPage() {
           {/* Форма калькулятора */}
           <div className="relative -mt-8 md:-mt-12 lg:-mt-20">
             <div className="relative z-10">
-              <div className="bg-white rounded-[30px] shadow-lg">
-                <div className="max-w-container mx-auto">
-                  <div className="px-6 md:px-10 lg:px-10 laptop:px-[60px] py-12 md:py-16 lg:py-16 laptop:py-[80px]">
-                    <form className="space-y-8">
-                      <div className="grid gap-4 md:gap-6 lg:gap-12 laptop:gap-[70px] grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                        {/* Сумма вклада */}
-                        <div className="space-y-2">
-                          <label className="block text-label text-gray-700 pl-10">
-                            Сумма вклада, ₽
-                          </label>
-                          <input
-                            type="text"
-                            value={amount}
-                            onChange={(e) => setAmount(e.target.value)}
-                            className="w-full h-[60px] pl-10 rounded-[30px] bg-[#E9F5FF] border-0 focus:ring-2 focus:ring-accent-blue text-[22px]"
-                          />
-                          {errors.amount && (
-                            <div className="text-red-500 text-sm pl-10">{errors.amount}</div>
-                          )}
-                        </div>
-
-                        {/* Срок вклада */}
-                        <div className="space-y-2">
-                          <label className="block text-label text-gray-700 pl-10">
-                            Срок вклада
-                          </label>
-                          <div className="relative">
-                            <input
-                              type="text"
-                              value={term}
-                              onChange={handleTermChange}
-                              className="w-full h-[60px] pl-10 rounded-[30px] bg-[#E9F5FF] border-0 focus:ring-2 focus:ring-accent-blue text-[22px]"
-                            />
-                            <div className="absolute inset-y-0 right-0 flex items-center">
-                              <DurationSelect 
-                                value={currentPeriod} 
-                                onChange={handlePeriodChange}
-                                term={term}
-                              />
-                            </div>
-                          </div>
-                          {errors.term && (
-                            <div className="text-red-500 text-sm pl-10">{errors.term}</div>
-                          )}
-                        </div>
-
-                        {/* Процентная ставка */}
-                        <div className="space-y-2">
-                          <label className="block text-label text-gray-700 pl-10">
-                            Процентная ставка, % годовых
-                          </label>
-                          <input
-                            type="text"
-                            value={rate}
-                            onChange={(e) => setRate(e.target.value)}
-                            onBlur={(e) => {
-                              const value = e.target.value;
-                              if (value && !value.includes('.')) {
-                                setRate(`${value}.00`);
-                              } else if (value.endsWith('.')) {
-                                setRate(`${value}00`);
-                              } else if (value.includes('.') && value.split('.')[1].length < 2) {
-                                setRate(`${value}0`);
-                              }
-                            }}
-                            className="w-full h-[60px] pl-10 rounded-[30px] bg-[#E9F5FF] border-0 focus:ring-2 focus:ring-accent-blue text-[22px]"
-                          />
-                          {errors.rate && (
-                            <div className="text-red-500 text-sm pl-10">{errors.rate}</div>
-                          )}
-                        </div>
-
-                        {/* Дата открытия */}
-                        <div className="space-y-2">
-                          <label className="block text-label text-gray-700 pl-10">
-                            Дата открытия
-                          </label>
-                          <DatePickerInput value={startDate} onChange={setStartDate} />
-                          {errors.startDate && (
-                            <div className="text-red-500 text-sm pl-10">{errors.startDate}</div>
-                          )}
-                        </div>
-
-                        {/* Капитализация */}
-                        <div className="col-span-1 md:col-span-2 lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 lg:gap-8 laptop:gap-[70px] items-start">
-                          <div className="space-y-2">
-                            <div className="block text-label text-gray-700 pl-10 invisible">
-                              &nbsp;
-                            </div>
-                            <div className="h-[60px] flex items-start relative pt-[2px]">
-                              <input
-                                id="capitalization-checkbox"
-                                type="checkbox"
-                                checked={isCapitalized}
-                                onChange={(e) => setIsCapitalized(e.target.checked)}
-                                className="h-[14px] w-[14px] min-w-[14px] min-h-[14px] rounded border-2 border-[#CEE1F0] text-[#CEE1F0] focus:ring-2 focus:ring-[#CEE1F0] checked:bg-[#CEE1F0] checked:hover:bg-[#CEE1F0] cursor-pointer absolute left-0 top-[2px]"
-                              />
-                              <label htmlFor="capitalization-checkbox" className="text-[18px] text-black cursor-pointer absolute left-10 top-[-2px]">
-                                Начисление процентов с&nbsp;учетом капитализации
-                              </label>
-                            </div>
-                          </div>
-                          {isCapitalized && (
-                            <div className="space-y-2">
-                              <div className="block text-label text-gray-700 pl-10">
-                                Периодичность капитализации
-                              </div>
-                              <CapitalizationSelect
-                                value={capitalizationPeriod}
-                                onChange={setCapitalizationPeriod}
-                                isCapitalized={isCapitalized}
-                              />
-                            </div>
-                          )}
-                        </div>
+              <div className="bg-white rounded-[30px] shadow-lg max-w-container mx-auto">
+                <div className="max-w-container mx-auto px-6 md:px-10 lg:px-9 laptop:px-[60px] py-12 md:py-16 lg:py-14 laptop:py-[80px]">
+                  <form className="space-y-8">
+                    <div className="grid gap-4 md:gap-6 lg:gap-11 laptop:gap-[70px] grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                      {/* Сумма вклада */}
+                      <div className="space-y-2">
+                        <label className="block text-label text-gray-700 pl-10">
+                          Сумма вклада, ₽
+                        </label>
+                        <input
+                          type="text"
+                          value={amount}
+                          onChange={(e) => setAmount(e.target.value)}
+                          className="w-full h-[60px] pl-10 rounded-[30px] bg-[#E9F5FF] border-0 focus:ring-2 focus:ring-accent-blue text-[22px]"
+                        />
+                        {errors.amount && (
+                          <div className="text-red-500 text-sm pl-10">{errors.amount}</div>
+                        )}
                       </div>
-                    </form>
-                  </div>
+
+                      {/* Срок вклада */}
+                      <div className="space-y-2">
+                        <label className="block text-label text-gray-700 pl-10">
+                          Срок вклада
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            value={term}
+                            onChange={handleTermChange}
+                            className="w-full h-[60px] pl-10 rounded-[30px] bg-[#E9F5FF] border-0 focus:ring-2 focus:ring-accent-blue text-[22px]"
+                          />
+                          <div className="absolute inset-y-0 right-0 flex items-center">
+                            <DurationSelect 
+                              value={currentPeriod} 
+                              onChange={handlePeriodChange}
+                              term={term}
+                            />
+                          </div>
+                        </div>
+                        {errors.term && (
+                          <div className="text-red-500 text-sm pl-10">{errors.term}</div>
+                        )}
+                      </div>
+
+                      {/* Процентная ставка */}
+                      <div className="space-y-2">
+                        <label className="block text-label text-gray-700 pl-10">
+                          Процентная ставка, % годовых
+                        </label>
+                        <input
+                          type="text"
+                          value={rate}
+                          onChange={(e) => setRate(e.target.value)}
+                          onBlur={(e) => {
+                            const value = e.target.value;
+                            if (value && !value.includes('.')) {
+                              setRate(`${value}.00`);
+                            } else if (value.endsWith('.')) {
+                              setRate(`${value}00`);
+                            } else if (value.includes('.') && value.split('.')[1].length < 2) {
+                              setRate(`${value}0`);
+                            }
+                          }}
+                          className="w-full h-[60px] pl-10 rounded-[30px] bg-[#E9F5FF] border-0 focus:ring-2 focus:ring-accent-blue text-[22px]"
+                        />
+                        {errors.rate && (
+                          <div className="text-red-500 text-sm pl-10">{errors.rate}</div>
+                        )}
+                      </div>
+
+                      {/* Дата открытия */}
+                      <div className="space-y-2">
+                        <label className="block text-label text-gray-700 pl-10">
+                          Дата открытия
+                        </label>
+                        <DatePickerInput value={startDate} onChange={setStartDate} />
+                        {errors.startDate && (
+                          <div className="text-red-500 text-sm pl-10">{errors.startDate}</div>
+                        )}
+                      </div>
+
+                      {/* Капитализация */}
+                      <div className="col-span-1 md:col-span-2 lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 lg:gap-11 laptop:gap-[70px] items-start">
+                        <div className="space-y-2">
+                          <div className="block text-label text-gray-700 pl-10 invisible">
+                            &nbsp;
+                          </div>
+                          <div className="h-[60px] flex items-start relative pt-[2px]">
+                            <input
+                              id="capitalization-checkbox"
+                              type="checkbox"
+                              checked={isCapitalized}
+                              onChange={(e) => setIsCapitalized(e.target.checked)}
+                              className="h-[14px] w-[14px] min-w-[14px] min-h-[14px] rounded border-2 border-[#CEE1F0] text-[#CEE1F0] focus:ring-2 focus:ring-[#CEE1F0] checked:bg-[#CEE1F0] checked:hover:bg-[#CEE1F0] cursor-pointer absolute left-0 top-[2px]"
+                            />
+                            <label htmlFor="capitalization-checkbox" className="text-[18px] text-black cursor-pointer absolute left-10 top-[-2px]">
+                              Начисление процентов с&nbsp;учетом капитализации
+                            </label>
+                          </div>
+                        </div>
+                        {isCapitalized && (
+                          <div className="space-y-2">
+                            <div className="block text-label text-gray-700 pl-10">
+                              Периодичность капитализации
+                            </div>
+                            <CapitalizationSelect
+                              value={capitalizationPeriod}
+                              onChange={setCapitalizationPeriod}
+                              isCapitalized={isCapitalized}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </form>
                 </div>
               </div>
 
               {/* Результаты */}
-              <div className="bg-accent-blue text-white rounded-[30px]">
-                <div className="max-w-container mx-auto">
-                  <div className="px-6 md:px-10 lg:px-10 laptop:px-[60px] py-6 md:py-8 lg:py-6 laptop:py-[30px]">
-                    <div className="grid gap-4 md:gap-6 lg:gap-12 laptop:gap-[70px] grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
-                      {/* Левая часть с результатами (2 колонки) */}
-                      <div className={`grid sm:col-span-2 md:col-span-2 ${isCapitalized ? 'grid-cols-1 sm:grid-cols-3 md:grid-cols-[42%_29%_29%]' : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-[55%_45%]'} gap-3 sm:gap-4 md:gap-[20px]`}>
-                        <div className="space-y-2">
-                          <div className="text-[18px] font-medium opacity-80 whitespace-nowrap">Сумма в конце срока</div>
-                          <div className="text-[28px] font-semibold whitespace-nowrap">{formatNumber(total)} ₽</div>
-                        </div>
-                        
-                        {isCapitalized && (
-                          <div className="space-y-2">
-                            <div className="text-[18px] font-medium opacity-80 whitespace-nowrap">Эффективная ставка</div>
-                            <div className="text-[28px] font-semibold whitespace-nowrap">{formatNumber(effectiveRate)}%</div>
-                          </div>
-                        )}
-                        
-                        <div className="space-y-2">
-                          <div className="text-[18px] font-medium opacity-80 whitespace-nowrap">Доход</div>
-                          <div className="text-[28px] font-semibold whitespace-nowrap">{formatNumber(profit)} ₽</div>
-                        </div>
+              <div className="bg-accent-blue text-white rounded-[30px] max-w-container mx-auto">
+                <div className="max-w-container mx-auto px-6 md:px-10 lg:px-9 laptop:px-[60px] py-6 md:py-8 lg:py-6 laptop:py-[30px]">
+                  <div className="grid gap-4 md:gap-6 lg:gap-11 laptop:gap-[70px] grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
+                    {/* Левая часть с результатами (2 колонки) */}
+                    <div className={`grid sm:col-span-2 md:col-span-2 ${isCapitalized ? 'grid-cols-1 sm:grid-cols-3 md:grid-cols-[42%_29%_29%]' : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-[55%_45%]'} gap-3 sm:gap-4 md:gap-[20px]`}>
+                      <div className="space-y-2">
+                        <div className="text-[18px] font-medium opacity-80 whitespace-nowrap">Сумма в конце срока</div>
+                        <div className="text-[28px] font-semibold whitespace-nowrap">{formatNumber(total)} ₽</div>
                       </div>
+                      
+                      {isCapitalized && (
+                        <div className="space-y-2">
+                          <div className="text-[18px] font-medium opacity-80 whitespace-nowrap">Эффективная ставка</div>
+                          <div className="text-[28px] font-semibold whitespace-nowrap">{formatNumber(effectiveRate)}%</div>
+                        </div>
+                      )}
+                      
+                      <div className="space-y-2">
+                        <div className="text-[18px] font-medium opacity-80 whitespace-nowrap">Доход</div>
+                        <div className="text-[28px] font-semibold whitespace-nowrap">{formatNumber(profit)} ₽</div>
+                      </div>
+                    </div>
 
-                      {/* Кнопка графика (1 колонка справа) */}
-                      <div className="space-y-2 sm:col-span-2 md:col-span-1">
-                        <button
-                          type="button"
-                          onClick={() => setIsVisible(!isVisible)}
-                          className="w-full h-[60px] bg-white text-[18px] text-accent-blue rounded-[30px] hover:bg-blue-50 transition-colors"
-                        >
-                          График начислений
-                        </button>
-                      </div>
+                    {/* Кнопка графика (1 колонка справа) */}
+                    <div className="space-y-2 sm:col-span-2 md:col-span-1">
+                      <button
+                        type="button"
+                        onClick={() => setIsVisible(!isVisible)}
+                        className="w-full h-[60px] bg-white text-[18px] text-accent-blue rounded-[30px] hover:bg-blue-50 transition-colors"
+                      >
+                        График начислений
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -278,29 +274,27 @@ export default function DepositPage() {
 
               {/* График начислений */}
               {isVisible && schedule.length > 0 && (
-                <div className="mt-8 bg-white rounded-[30px] shadow-lg">
-                  <div className="max-w-container mx-auto">
-                    <div className="px-6 md:px-10 lg:px-10 laptop:px-[60px] py-6 md:py-8 lg:py-6 laptop:py-[30px]">
-                      <div className="overflow-x-auto">
-                        <table className="w-full">
-                          <thead>
-                            <tr>
-                              <th className="py-4 px-0 text-left font-bold text-accent-blue">Дата</th>
-                              <th className="py-4 px-6 text-right font-bold text-accent-blue">Начислено процентов</th>
-                              <th className="py-4 px-0 text-right font-bold text-accent-blue">Остаток вклада</th>
+                <div className="mt-8 bg-white rounded-[30px] shadow-lg max-w-container mx-auto">
+                  <div className="max-w-container mx-auto px-6 md:px-10 lg:px-9 laptop:px-[60px] py-6 md:py-8 lg:py-6 laptop:py-[30px]">
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr>
+                            <th className="py-4 px-0 text-left font-bold text-accent-blue">Дата</th>
+                            <th className="py-4 px-6 text-right font-bold text-accent-blue">Начислено процентов</th>
+                            <th className="py-4 px-0 text-right font-bold text-accent-blue">Остаток вклада</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {schedule.map((item, index) => (
+                            <tr key={index} className="border-b border-gray-100">
+                              <td className="py-4 px-0">{item.date}</td>
+                              <td className="py-4 px-6 text-right">{formatNumber(item.interest)} ₽</td>
+                              <td className="py-4 px-0 text-right">{formatNumber(item.balance)} ₽</td>
                             </tr>
-                          </thead>
-                          <tbody>
-                            {schedule.map((item, index) => (
-                              <tr key={index} className="border-b border-gray-100">
-                                <td className="py-4 px-0">{item.date}</td>
-                                <td className="py-4 px-6 text-right">{formatNumber(item.interest)} ₽</td>
-                                <td className="py-4 px-0 text-right">{formatNumber(item.balance)} ₽</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
                 </div>
