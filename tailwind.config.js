@@ -6,6 +6,9 @@ module.exports = {
   ],
   theme: {
     extend: {
+      screens: {
+        'laptop': '1600px',
+      },
       fontFamily: {
         'display': ['Wix Madefor Display', 'sans-serif'],
       },

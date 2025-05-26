@@ -78,27 +78,27 @@ export default function DepositPage() {
       </Head>
       
       <main className="min-h-screen bg-deep-blue">
-        <div className="relative py-12 px-4 max-w-container mx-auto">
-          <div className="grid lg:grid-cols-12 gap-8">
+        <div className="relative py-8 md:py-10 lg:py-10 laptop:py-12 px-4 max-w-container mx-auto">
+          <div className="block md:grid md:grid-cols-2 lg:grid-cols-12 gap-4 md:gap-6 lg:gap-8">
             {/* Левая колонка с текстом */}
             <div className="lg:col-span-5">
               <div className="inline-flex items-center px-[30px] py-[5px] bg-accent-blue text-white text-subhead rounded-[30px]">
                 Бесплатный и понятный
               </div>
               
-              <h1 className="text-head text-white mt-2.5">
+              <h1 className="text-head text-white mt-1.5 md:mt-2.5">
                 ИСПОЛЬЗУЙ НАШ<br />
                 ДЕПОЗИТНЫЙ КАЛЬКУЛЯТОР
               </h1>
               
-              <p className="text-subhead text-white/80 mt-10">
+              <p className="text-subhead text-white/80 mt-4 md:mt-6 lg:mt-10 mb-12 md:mb-16 lg:mb-0">
                 Вы сможете рассчитать доход по вкладу, оценить, как он меняется в зависимости 
                 от разных сроков и условий выплаты процентов.
               </p>
             </div>
 
             {/* Правая колонка с картинкой */}
-            <div className="hidden lg:block lg:col-span-7 relative h-[400px]">
+            <div className="hidden md:block lg:col-span-7 relative h-[300px] md:h-[400px]">
               <Image 
                 src="/calc/img/cards.png"
                 alt="Банковские карты"
@@ -113,13 +113,13 @@ export default function DepositPage() {
           </div>
 
           {/* Форма калькулятора */}
-          <div className="relative -mt-20">
+          <div className="relative -mt-8 md:-mt-12 lg:-mt-20">
             <div className="relative z-10">
               <div className="bg-white rounded-[30px] shadow-lg">
                 <div className="max-w-container mx-auto">
-                  <div className="px-[60px] py-[80px]">
+                  <div className="px-6 md:px-10 lg:px-10 laptop:px-[60px] py-12 md:py-16 lg:py-16 laptop:py-[80px]">
                     <form className="space-y-8">
-                      <div className="grid gap-[70px] md:grid-cols-2 lg:grid-cols-3">
+                      <div className="grid gap-4 md:gap-6 lg:gap-12 laptop:gap-[70px] grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                         {/* Сумма вклада */}
                         <div className="space-y-2">
                           <label className="block text-label text-gray-700 pl-10">
@@ -199,7 +199,7 @@ export default function DepositPage() {
                         </div>
 
                         {/* Капитализация */}
-                        <div className="col-span-2 grid grid-cols-2 gap-[70px] items-start">
+                        <div className="col-span-1 md:col-span-2 lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 lg:gap-8 laptop:gap-[70px] items-start">
                           <div className="space-y-2">
                             <div className="block text-label text-gray-700 pl-10 invisible">
                               &nbsp;
@@ -212,7 +212,7 @@ export default function DepositPage() {
                                 onChange={(e) => setIsCapitalized(e.target.checked)}
                                 className="h-[14px] w-[14px] min-w-[14px] min-h-[14px] rounded border-2 border-[#CEE1F0] text-[#CEE1F0] focus:ring-2 focus:ring-[#CEE1F0] checked:bg-[#CEE1F0] checked:hover:bg-[#CEE1F0] cursor-pointer absolute left-0 top-[2px]"
                               />
-                              <label htmlFor="capitalization-checkbox" className="text-[18px] text-gray-700 cursor-pointer absolute left-10 top-[-2px]">
+                              <label htmlFor="capitalization-checkbox" className="text-[18px] text-black cursor-pointer absolute left-10 top-[-2px]">
                                 Начисление процентов с&nbsp;учетом капитализации
                               </label>
                             </div>
@@ -239,10 +239,10 @@ export default function DepositPage() {
               {/* Результаты */}
               <div className="bg-accent-blue text-white rounded-[30px]">
                 <div className="max-w-container mx-auto">
-                  <div className="px-[60px] py-[30px]">
-                    <div className="grid gap-[70px] md:grid-cols-3">
+                  <div className="px-6 md:px-10 lg:px-10 laptop:px-[60px] py-6 md:py-8 lg:py-6 laptop:py-[30px]">
+                    <div className="grid gap-4 md:gap-6 lg:gap-12 laptop:gap-[70px] grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
                       {/* Левая часть с результатами (2 колонки) */}
-                      <div className={`grid col-span-2 ${isCapitalized ? 'grid-cols-[42%_29%_29%]' : 'grid-cols-[55%_45%]'} gap-[20px]`}>
+                      <div className={`grid sm:col-span-2 md:col-span-2 ${isCapitalized ? 'grid-cols-1 sm:grid-cols-3 md:grid-cols-[42%_29%_29%]' : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-[55%_45%]'} gap-3 sm:gap-4 md:gap-[20px]`}>
                         <div className="space-y-2">
                           <div className="text-[18px] font-medium opacity-80 whitespace-nowrap">Сумма в конце срока</div>
                           <div className="text-[28px] font-semibold whitespace-nowrap">{formatNumber(total)} ₽</div>
@@ -262,7 +262,7 @@ export default function DepositPage() {
                       </div>
 
                       {/* Кнопка графика (1 колонка справа) */}
-                      <div className="space-y-2">
+                      <div className="space-y-2 sm:col-span-2 md:col-span-1">
                         <button
                           type="button"
                           onClick={() => setIsVisible(!isVisible)}
@@ -280,7 +280,7 @@ export default function DepositPage() {
               {isVisible && schedule.length > 0 && (
                 <div className="mt-8 bg-white rounded-[30px] shadow-lg">
                   <div className="max-w-container mx-auto">
-                    <div className="px-[60px] py-[30px]">
+                    <div className="px-6 md:px-10 lg:px-10 laptop:px-[60px] py-6 md:py-8 lg:py-6 laptop:py-[30px]">
                       <div className="overflow-x-auto">
                         <table className="w-full">
                           <thead>
