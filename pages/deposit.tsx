@@ -56,6 +56,9 @@ export default function DepositPage() {
     setCapitalizationPeriod
   } = useDepositCalculator();
 
+  // Ref для скролла к графику
+  const scheduleRef = React.useRef<HTMLDivElement>(null);
+
   // Получаем текущее окончание в зависимости от числа
   const currentPeriod = getWordForm(parseInt(term) || 0, periodType === 'year' ? 'year' : 'month');
 
@@ -65,6 +68,20 @@ export default function DepositPage() {
 
   const handlePeriodChange = (value: string) => {
     setPeriodType(value === 'год' || value === 'года' || value === 'лет' ? 'year' : 'month');
+  };
+
+  const handleToggleSchedule = () => {
+    setIsVisible(!isVisible);
+    
+    // Если показываем график, скроллим к нему через небольшую задержку
+    if (!isVisible && schedule.length > 0) {
+      setTimeout(() => {
+        scheduleRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
+        });
+      }, 300);
+    }
   };
 
   return (
@@ -86,14 +103,14 @@ export default function DepositPage() {
                 Бесплатный и понятный
               </div>
               
-              <h1 className="text-head text-white mt-1.5 md:mt-2.5">
+              <h1 className="text-head text-white mt-1.5 md:mt-2.5 leading-tight md:leading-normal">
                 ИСПОЛЬЗУЙ НАШ<br />
                 ДЕПОЗИТНЫЙ КАЛЬКУЛЯТОР
               </h1>
               
-              <p className="text-subhead text-white/80 mt-4 md:mt-6 lg:mt-10 mb-12 md:mb-16 lg:mb-0">
-                Вы сможете рассчитать доход по вкладу, оценить, как он меняется в зависимости 
-                от разных сроков и условий выплаты процентов.
+              <p className="text-subhead text-white/80 mt-1.5 md:mt-6 lg:mt-10 mb-12 md:mb-16 lg:mb-0">
+                Вы сможете рассчитать доход по&nbsp;вкладу, оценить, как он&nbsp;меняется в&nbsp;зависимости 
+                от&nbsp;разных сроков и&nbsp;условий выплаты процентов.
               </p>
             </div>
 
@@ -200,7 +217,7 @@ export default function DepositPage() {
                       {/* Капитализация */}
                       <div className="col-span-1 md:col-span-2 lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 lg:gap-11 laptop:gap-[70px] items-start">
                         <div className="space-y-2">
-                          <div className="block text-label text-gray-700 pl-10 invisible">
+                          <div className="hidden md:block text-label text-gray-700 pl-10 invisible">
                             &nbsp;
                           </div>
                           <div className="h-[60px] flex items-start relative pt-[2px]">
@@ -209,7 +226,7 @@ export default function DepositPage() {
                               type="checkbox"
                               checked={isCapitalized}
                               onChange={(e) => setIsCapitalized(e.target.checked)}
-                              className="h-[14px] w-[14px] min-w-[14px] min-h-[14px] rounded border-2 border-[#CEE1F0] text-[#CEE1F0] focus:ring-2 focus:ring-[#CEE1F0] checked:bg-[#CEE1F0] checked:hover:bg-[#CEE1F0] cursor-pointer absolute left-0 top-[2px]"
+                              className="h-[22px] w-[22px] min-w-[22px] min-h-[22px] md:h-[20px] md:w-[20px] md:min-w-[20px] md:min-h-[20px] rounded border-2 border-[#CEE1F0] text-[#CEE1F0] focus:ring-2 focus:ring-[#CEE1F0] checked:bg-[#CEE1F0] checked:hover:bg-[#CEE1F0] cursor-pointer absolute left-0 top-[2px]"
                             />
                             <label htmlFor="capitalization-checkbox" className="text-[18px] text-black cursor-pointer absolute left-10 top-[-2px]">
                               Начисление процентов с&nbsp;учетом капитализации
@@ -240,29 +257,29 @@ export default function DepositPage() {
                   <div className="grid gap-4 md:gap-6 lg:gap-11 laptop:gap-[70px] grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
                     {/* Левая часть с результатами (2 колонки) */}
                     <div className={`grid sm:col-span-2 md:col-span-2 ${isCapitalized ? 'grid-cols-1 sm:grid-cols-3 md:grid-cols-[42%_29%_29%]' : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-[55%_45%]'} gap-3 sm:gap-4 md:gap-[20px]`}>
-                      <div className="space-y-2">
+                      <div className="space-y-1">
                         <div className="text-[18px] font-medium opacity-80 whitespace-nowrap">Сумма в конце срока</div>
                         <div className="text-[28px] font-semibold whitespace-nowrap">{formatNumber(total)} ₽</div>
                       </div>
                       
                       {isCapitalized && (
-                        <div className="space-y-2">
+                        <div className="space-y-1">
                           <div className="text-[18px] font-medium opacity-80 whitespace-nowrap">Эффективная ставка</div>
                           <div className="text-[28px] font-semibold whitespace-nowrap">{formatNumber(effectiveRate)}%</div>
                         </div>
                       )}
                       
-                      <div className="space-y-2">
+                      <div className="space-y-1">
                         <div className="text-[18px] font-medium opacity-80 whitespace-nowrap">Доход</div>
                         <div className="text-[28px] font-semibold whitespace-nowrap">{formatNumber(profit)} ₽</div>
                       </div>
                     </div>
 
                     {/* Кнопка графика (1 колонка справа) */}
-                    <div className="space-y-2 sm:col-span-2 md:col-span-1">
+                    <div className="sm:col-span-2 md:col-span-1 flex items-center">
                       <button
                         type="button"
-                        onClick={() => setIsVisible(!isVisible)}
+                        onClick={handleToggleSchedule}
                         className="w-full h-[60px] bg-white text-[18px] text-accent-blue rounded-[30px] hover:bg-blue-50 transition-colors"
                       >
                         График начислений
@@ -274,7 +291,12 @@ export default function DepositPage() {
 
               {/* График начислений */}
               {isVisible && schedule.length > 0 && (
-                <div className="mt-8 bg-white rounded-[30px] shadow-lg max-w-container mx-auto">
+                <div 
+                  ref={scheduleRef}
+                  className="mt-8 bg-white rounded-[30px] shadow-lg max-w-container mx-auto opacity-0 animate-pulse" 
+                  style={{
+                    animation: 'slideDown 0.5s ease-out forwards'
+                  }}>
                   <div className="max-w-container mx-auto px-6 md:px-10 lg:px-9 laptop:px-[60px] py-6 md:py-8 lg:py-6 laptop:py-[30px]">
                     <div className="overflow-x-auto">
                       <table className="w-full">
@@ -289,14 +311,27 @@ export default function DepositPage() {
                           {schedule.map((item, index) => (
                             <tr key={index} className="border-b border-gray-100">
                               <td className="py-4 px-0">{item.date}</td>
-                              <td className="py-4 px-6 text-right">{formatNumber(item.interest)} ₽</td>
-                              <td className="py-4 px-0 text-right">{formatNumber(item.balance)} ₽</td>
+                              <td className="py-4 px-6 text-right whitespace-nowrap">{formatNumber(item.interest)} ₽</td>
+                              <td className="py-4 px-0 text-right whitespace-nowrap">{formatNumber(item.balance)} ₽</td>
                             </tr>
                           ))}
                         </tbody>
                       </table>
                     </div>
                   </div>
+                  
+                  <style jsx>{`
+                    @keyframes slideDown {
+                      from {
+                        opacity: 0;
+                        transform: translateY(-20px);
+                      }
+                      to {
+                        opacity: 1;
+                        transform: translateY(0);
+                      }
+                    }
+                  `}</style>
                 </div>
               )}
             </div>
