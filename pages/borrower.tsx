@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import Head from 'next/head';
 import Image from 'next/image';
 import DurationSelect from '../components/DurationSelect';
+import CreditAlert from '../components/CreditAlert';
+import FloatingCreditButton from '../components/FloatingCreditButton';
 import { useBorrowerTest } from '../hooks/useBorrowerTest';
 
 // Типы для переключателя
@@ -40,25 +42,19 @@ export default function BorrowerTestPage() {
     term,
     periodType,
     rate,
-    startDate,
-    total,
-    profit,
-    schedule,
-    totalInterest,
-    isVisible,
     errors,
-    effectiveRate,
+    calculatedMonthlyPayment,
+    calculatedAmount,
+    calculatedTerm,
+    totalInterest,
+    debtBurden,
+    remainingIncome,
+    averageIncomeValue,
     setAmount,
     setTerm,
     setPeriodType,
     setRate,
-    setStartDate,
-    setIsVisible,
     formatNumber,
-    isCapitalized,
-    setIsCapitalized,
-    capitalizationPeriod,
-    setCapitalizationPeriod,
     income1,
     income2,
     income3,
@@ -68,11 +64,38 @@ export default function BorrowerTestPage() {
     monthlyPayment,
     averageIncome,
     setMonthlyPayment,
-    setAverageIncome
+    setAverageIncome,
+    creditAlert
   } = useBorrowerTest();
+
+  // Ref для скролла к уведомлению
+  const alertRef = useRef<HTMLDivElement>(null);
+
+  // Функция плавного скролла к уведомлению
+  const scrollToAlert = () => {
+    alertRef.current?.scrollIntoView({ 
+      behavior: 'smooth', 
+      block: 'center' 
+    });
+  };
 
   // Получаем текущее окончание в зависимости от числа
   const currentPeriod = getWordForm(parseInt(term) || 0, periodType === 'year' ? 'year' : 'month');
+
+  // Функция для форматирования срока в месяцах
+  const formatTermInMonths = (months: number): string => {
+    if (months < 12) {
+      return `${months} ${getWordForm(months, 'month')}`;
+    } else {
+      const years = Math.floor(months / 12);
+      const remainingMonths = months % 12;
+      if (remainingMonths === 0) {
+        return `${years} ${getWordForm(years, 'year')}`;
+      } else {
+        return `${years} ${getWordForm(years, 'year')} ${remainingMonths} ${getWordForm(remainingMonths, 'month')}`;
+      }
+    }
+  };
 
   const handleTermChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setTerm(e.target.value);
@@ -80,20 +103,6 @@ export default function BorrowerTestPage() {
 
   const handlePeriodChange = (value: string) => {
     setPeriodType(value === 'год' || value === 'года' || value === 'лет' ? 'year' : 'month');
-  };
-
-  const handleToggleSchedule = () => {
-    setIsVisible(!isVisible);
-    
-    // Если показываем график, скроллим к нему через небольшую задержку
-    if (!isVisible && schedule.length > 0) {
-      setTimeout(() => {
-        // scheduleRef.current?.scrollIntoView({
-        //   behavior: 'smooth',
-        //   block: 'center'
-        // });
-      }, 300);
-    }
   };
 
   return (
@@ -459,21 +468,21 @@ export default function BorrowerTestPage() {
                   {/* Результаты для вкладки "Ежемесячный платеж" */}
                   {activeTab === 'monthly' && (
                     <div className="grid gap-4 md:gap-6 lg:gap-11 laptop:gap-[70px] grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
-                      <div className="space-y-1 flex flex-col items-start">
-                        <div className="text-[18px] font-medium opacity-80 leading-tight line-clamp-2 min-h-[44px] flex items-start">Ежемесячный платеж</div>
-                        <div className="text-[28px] font-semibold whitespace-nowrap">8 991₽</div>
+                      <div className="space-y-0 sm:space-y-1 flex flex-col items-start">
+                        <div className="text-[18px] font-medium opacity-80 leading-tight line-clamp-2 min-h-[36px] sm:min-h-[44px] flex items-start">Ежемесячный платеж</div>
+                        <div className="text-[28px] font-semibold whitespace-nowrap">{formatNumber(calculatedMonthlyPayment)}₽</div>
                       </div>
-                      <div className="space-y-1 flex flex-col items-start">
-                        <div className="text-[18px] font-medium opacity-80 leading-tight line-clamp-2 min-h-[44px] flex items-start">Совокупный средний доход</div>
-                        <div className="text-[28px] font-semibold whitespace-nowrap">35 000₽</div>
+                      <div className="space-y-0 sm:space-y-1 flex flex-col items-start">
+                        <div className="text-[18px] font-medium opacity-80 leading-tight line-clamp-2 min-h-[36px] sm:min-h-[44px] flex items-start">Совокупный средний доход</div>
+                        <div className="text-[28px] font-semibold whitespace-nowrap">{formatNumber(averageIncomeValue)}₽</div>
                       </div>
-                      <div className="space-y-1 flex flex-col items-start">
-                        <div className="text-[18px] font-medium opacity-80 leading-tight line-clamp-2 min-h-[44px] flex items-start">Налоговая нагрузка</div>
-                        <div className="text-[28px] font-semibold whitespace-nowrap">25.7%</div>
+                      <div className="space-y-0 sm:space-y-1 flex flex-col items-start">
+                        <div className="text-[18px] font-medium opacity-80 leading-tight line-clamp-2 min-h-[36px] sm:min-h-[44px] flex items-start">Долговая нагрузка</div>
+                        <div className="text-[28px] font-semibold whitespace-nowrap">{debtBurden.toFixed(1)}%</div>
                       </div>
-                      <div className="space-y-1 flex flex-col items-start">
-                        <div className="text-[18px] font-medium opacity-80 leading-tight line-clamp-2 min-h-[44px] flex items-start">Остаток ежемесячного дохода после выплат</div>
-                        <div className="text-[28px] font-semibold whitespace-nowrap">26 009₽</div>
+                      <div className="space-y-0 sm:space-y-1 flex flex-col items-start">
+                        <div className="text-[18px] font-medium opacity-80 leading-tight line-clamp-2 min-h-[36px] sm:min-h-[44px] flex items-start">Остаток ежемесячного дохода после выплат</div>
+                        <div className="text-[28px] font-semibold whitespace-nowrap">{formatNumber(remainingIncome)}₽</div>
                       </div>
                     </div>
                   )}
@@ -481,21 +490,21 @@ export default function BorrowerTestPage() {
                   {/* Результаты для вкладки "Сумма" */}
                   {activeTab === 'amount' && (
                     <div className="grid gap-4 md:gap-6 lg:gap-11 laptop:gap-[70px] grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
-                      <div className="space-y-1 flex flex-col items-start">
-                        <div className="text-[18px] font-medium opacity-80 leading-tight line-clamp-2 min-h-[44px] flex items-start">Сумма</div>
-                        <div className="text-[28px] font-semibold whitespace-nowrap">120 000₽</div>
+                      <div className="space-y-0 sm:space-y-1 flex flex-col items-start">
+                        <div className="text-[18px] font-medium opacity-80 leading-tight line-clamp-2 min-h-[36px] sm:min-h-[44px] flex items-start">Сумма</div>
+                        <div className="text-[28px] font-semibold whitespace-nowrap">{formatNumber(calculatedAmount)}₽</div>
                       </div>
-                      <div className="space-y-1 flex flex-col items-start">
-                        <div className="text-[18px] font-medium opacity-80 leading-tight line-clamp-2 min-h-[44px] flex items-start">Совокупный средний доход</div>
-                        <div className="text-[28px] font-semibold whitespace-nowrap">35 000₽</div>
+                      <div className="space-y-0 sm:space-y-1 flex flex-col items-start">
+                        <div className="text-[18px] font-medium opacity-80 leading-tight line-clamp-2 min-h-[36px] sm:min-h-[44px] flex items-start">Совокупный средний доход</div>
+                        <div className="text-[28px] font-semibold whitespace-nowrap">{formatNumber(averageIncomeValue)}₽</div>
                       </div>
-                      <div className="space-y-1 flex flex-col items-start">
-                        <div className="text-[18px] font-medium opacity-80 leading-tight line-clamp-2 min-h-[44px] flex items-start">Долговая нагрузка</div>
-                        <div className="text-[28px] font-semibold whitespace-nowrap">28.6%</div>
+                      <div className="space-y-0 sm:space-y-1 flex flex-col items-start">
+                        <div className="text-[18px] font-medium opacity-80 leading-tight line-clamp-2 min-h-[36px] sm:min-h-[44px] flex items-start">Долговая нагрузка</div>
+                        <div className="text-[28px] font-semibold whitespace-nowrap">{debtBurden.toFixed(1)}%</div>
                       </div>
-                      <div className="space-y-1 flex flex-col items-start">
-                        <div className="text-[18px] font-medium opacity-80 leading-tight line-clamp-2 min-h-[44px] flex items-start">Остаток ежемесячного дохода после выплат</div>
-                        <div className="text-[28px] font-semibold whitespace-nowrap">25 000₽</div>
+                      <div className="space-y-0 sm:space-y-1 flex flex-col items-start">
+                        <div className="text-[18px] font-medium opacity-80 leading-tight line-clamp-2 min-h-[36px] sm:min-h-[44px] flex items-start">Остаток ежемесячного дохода после выплат</div>
+                        <div className="text-[28px] font-semibold whitespace-nowrap">{formatNumber(remainingIncome)}₽</div>
                       </div>
                     </div>
                   )}
@@ -503,26 +512,42 @@ export default function BorrowerTestPage() {
                   {/* Результаты для вкладки "Срок" */}
                   {activeTab === 'term' && (
                     <div className="grid gap-4 md:gap-6 lg:gap-11 laptop:gap-[70px] grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
-                      <div className="space-y-1 flex flex-col items-start">
-                        <div className="text-[18px] font-medium opacity-80 leading-tight line-clamp-2 min-h-[44px] flex items-start">Срок</div>
-                        <div className="text-[28px] font-semibold whitespace-nowrap">12 месяцев</div>
+                      <div className="space-y-0 sm:space-y-1 flex flex-col items-start">
+                        <div className="text-[18px] font-medium opacity-80 leading-tight line-clamp-2 min-h-[36px] sm:min-h-[44px] flex items-start">Срок</div>
+                        <div className="text-[28px] font-semibold whitespace-nowrap">{formatTermInMonths(calculatedTerm)}</div>
                       </div>
-                      <div className="space-y-1 flex flex-col items-start">
-                        <div className="text-[18px] font-medium opacity-80 leading-tight line-clamp-2 min-h-[44px] flex items-start">Совокупный средний доход</div>
-                        <div className="text-[28px] font-semibold whitespace-nowrap">35 000₽</div>
+                      <div className="space-y-0 sm:space-y-1 flex flex-col items-start">
+                        <div className="text-[18px] font-medium opacity-80 leading-tight line-clamp-2 min-h-[36px] sm:min-h-[44px] flex items-start">Среднемесячный доход</div>
+                        <div className="text-[28px] font-semibold whitespace-nowrap">{formatNumber(parseFloat(averageIncome.replace(/[^\d]/g, '')) || 0)}₽</div>
                       </div>
-                      <div className="space-y-1 flex flex-col items-start">
-                        <div className="text-[18px] font-medium opacity-80 leading-tight line-clamp-2 min-h-[44px] flex items-start">Долговая нагрузка</div>
-                        <div className="text-[28px] font-semibold whitespace-nowrap">28.6%</div>
+                      <div className="space-y-0 sm:space-y-1 flex flex-col items-start">
+                        <div className="text-[18px] font-medium opacity-80 leading-tight line-clamp-2 min-h-[36px] sm:min-h-[44px] flex items-start">Долговая нагрузка</div>
+                        <div className="text-[28px] font-semibold whitespace-nowrap">{((parseFloat(monthlyPayment.replace(/[^\d]/g, '')) || 0) / (parseFloat(averageIncome.replace(/[^\d]/g, '')) || 1) * 100).toFixed(1)}%</div>
                       </div>
-                      <div className="space-y-1 flex flex-col items-start">
-                        <div className="text-[18px] font-medium opacity-80 leading-tight line-clamp-2 min-h-[44px] flex items-start">Остаток ежемесячного дохода после выплат</div>
-                        <div className="text-[28px] font-semibold whitespace-nowrap">25 000₽</div>
+                      <div className="space-y-0 sm:space-y-1 flex flex-col items-start">
+                        <div className="text-[18px] font-medium opacity-80 leading-tight line-clamp-2 min-h-[36px] sm:min-h-[44px] flex items-start">Остаток ежемесячного дохода после выплат</div>
+                        <div className="text-[28px] font-semibold whitespace-nowrap">{formatNumber((parseFloat(averageIncome.replace(/[^\d]/g, '')) || 0) - (parseFloat(monthlyPayment.replace(/[^\d]/g, '')) || 0))}₽</div>
                       </div>
                     </div>
                   )}
                 </div>
               </div>
+
+              {/* Уведомления о кредитоспособности */}
+              {creditAlert && (
+                <div className="max-w-container mx-auto mt-6">
+                  <CreditAlert ref={alertRef} alert={creditAlert} />
+                </div>
+              )}
+
+              {/* Плавающая кнопка-индикатор */}
+              {creditAlert && (
+                <FloatingCreditButton
+                  alert={creditAlert}
+                  onClick={scrollToAlert}
+                  isVisible={true}
+                />
+              )}
             </div>
           </div>
         </div>

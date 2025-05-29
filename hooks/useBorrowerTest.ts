@@ -1,43 +1,66 @@
 import { useState, useEffect } from 'react';
 
-// Типы
-export type CapitalizationPeriod = 'monthly' | 'quarterly' | 'yearly' | null;
-
-// Типы
-export interface ScheduleItem {
-  date: string;
-  interest: number;
-  balance: number;
-  isCapitalization: boolean; // флаг для отметки периодов капитализации
-}
-
-interface BorrowerTestErrors {
+// Типы для кредитных расчетов
+export interface BorrowerTestErrors {
   amount?: string;
   term?: string;
   rate?: string;
-  startDate?: string;
+  monthlyPayment?: string;
+  income1?: string;
+  income2?: string;
+  income3?: string;
+  averageIncome?: string;
 }
 
-// Утилиты для валидации
+// Типы для статуса кредитоспособности
+export type CreditStatus = 'excellent' | 'good' | 'moderate' | 'high-risk';
+
+export interface CreditAlert {
+  status: CreditStatus;
+  title: string;
+  message: string;
+  recommendations: string[];
+  color: 'green' | 'yellow' | 'orange' | 'red';
+  icon: '✅' | '⚠️' | '🔶' | '❌';
+}
+
+// Утилиты для валидации кредитов
 const validateAmount = (value: string): string | undefined => {
   const amount = parseFloat(value.replace(/[^\d.]/g, ''));
   if (isNaN(amount)) return 'Введите корректную сумму';
-  if (amount < 1) return 'Минимальная сумма вклада 1 ₽';
-  if (amount > 10_000_000) return 'Максимальная сумма вклада 10 000 000 ₽';
+  if (amount < 10000) return 'Минимальная сумма кредита 10 000 ₽';
+  if (amount > 5_000_000) return 'Максимальная сумма кредита 5 000 000 ₽';
   return undefined;
 };
 
 const validateTerm = (months: number): string | undefined => {
-  if (months <= 0) return 'Срок вклада должен быть больше 0';
-  if (months > 60) return 'Максимальный срок вклада 60 месяцев';
+  if (months <= 0) return 'Срок кредита должен быть больше 0';
+  if (months < 3) return 'Минимальный срок кредита 3 месяца';
+  if (months > 84) return 'Максимальный срок кредита 84 месяца';
   return undefined;
 };
 
 const validateRate = (value: string): string | undefined => {
   const rate = parseFloat(value.replace(',', '.'));
   if (isNaN(rate)) return 'Введите корректную ставку';
-  if (rate < 0.01) return 'Минимальная ставка 0.01%';
+  if (rate < 1) return 'Минимальная ставка 1%';
   if (rate > 50) return 'Максимальная ставка 50%';
+  return undefined;
+};
+
+const validateIncome = (value: string): string | undefined => {
+  const income = parseFloat(value.replace(/[^\d]/g, ''));
+  if (isNaN(income)) return 'Введите корректный доход';
+  if (income < 1000) return 'Минимальный доход 1 000 ₽';
+  if (income > 10_000_000) return 'Максимальный доход 10 000 000 ₽';
+  return undefined;
+};
+
+const validateMonthlyPayment = (value: string, averageIncome: number): string | undefined => {
+  const payment = parseFloat(value.replace(/[^\d]/g, ''));
+  if (isNaN(payment)) return 'Введите корректный платеж';
+  if (payment < 100) return 'Минимальный платеж 100 ₽';
+  if (payment > averageIncome * 0.8) return 'Платеж не может превышать 80% от дохода';
   return undefined;
 };
 
@@ -49,7 +72,7 @@ export const formatNumber = (value: number): string => {
   }).format(value);
 };
 
-// Форматирование суммы вклада
+// Форматирование суммы
 const formatAmount = (value: string): string => {
   const numbers = value.replace(/[^\d]/g, '');
   const amount = parseInt(numbers) || 0;
@@ -80,30 +103,32 @@ const formatRate = (value: string): string => {
 
 // Основной хук
 export const useBorrowerTest = () => {
-  // Существующие состояния
-  const [amount, setAmount] = useState<string>(formatAmount('1000000'));
-  const [term, setTerm] = useState<string>('1');
+  // Основные состояния для кредита
+  const [amount, setAmount] = useState<string>(formatAmount('200000'));
+  const [term, setTerm] = useState<string>('3');
   const [periodType, setPeriodType] = useState<'year' | 'month'>('year');
   const [rate, setRate] = useState<string>('5.00');
-  const [startDate, setStartDate] = useState<Date>(new Date());
   
-  // Новые состояния для теста заемщика
+  // Состояния для теста заемщика
   const [monthlyPayment, setMonthlyPayment] = useState<string>(formatAmount('10000'));
   const [income1, setIncome1] = useState<string>(formatAmount('30000'));
-  const [income2, setIncome2] = useState<string>(formatAmount('35000'));
-  const [income3, setIncome3] = useState<string>(formatAmount('40000'));
-  const [averageIncome, setAverageIncome] = useState<string>(formatAmount('35000'));
+  const [income2, setIncome2] = useState<string>(formatAmount('30000'));
+  const [income3, setIncome3] = useState<string>(formatAmount('30000'));
+  const [averageIncome, setAverageIncome] = useState<string>(formatAmount('30000'));
   
-  // Новые состояния для капитализации
-  const [isCapitalized, setIsCapitalized] = useState<boolean>(false);
-  const [capitalizationPeriod, setCapitalizationPeriod] = useState<CapitalizationPeriod>(null);
-  
-  const [total, setTotal] = useState<number>(0);
-  const [profit, setProfit] = useState<number>(0);
-  const [effectiveRate, setEffectiveRate] = useState<number>(0);
-  const [schedule, setSchedule] = useState<ScheduleItem[]>([]);
+  // Результаты расчетов
+  const [calculatedMonthlyPayment, setCalculatedMonthlyPayment] = useState<number>(0);
+  const [calculatedAmount, setCalculatedAmount] = useState<number>(0);
+  const [calculatedTerm, setCalculatedTerm] = useState<number>(0);
   const [totalInterest, setTotalInterest] = useState<number>(0);
-  const [isVisible, setIsVisible] = useState<boolean>(false);
+  const [debtBurden, setDebtBurden] = useState<number>(0);
+  const [remainingIncome, setRemainingIncome] = useState<number>(0);
+  const [averageIncomeValue, setAverageIncomeValue] = useState<number>(0);
+  
+  // Состояния для уведомлений
+  const [creditAlert, setCreditAlert] = useState<CreditAlert | null>(null);
+  
+  // Состояния для UI
   const [errors, setErrors] = useState<BorrowerTestErrors>({});
 
   // Обработчики изменения значений с валидацией
@@ -133,30 +158,38 @@ export const useBorrowerTest = () => {
     }
   };
 
-  // Обработчики для новых полей теста заемщика
+  // Обработчики для полей теста заемщика
   const handleMonthlyPaymentChange = (value: string) => {
     const cleanValue = value.replace(/[^\d]/g, '');
     setMonthlyPayment(formatAmount(cleanValue));
+    
+    // Валидируем относительно среднего дохода
+    const avgIncome = parseFloat(averageIncome.replace(/[^\d]/g, '')) || 0;
+    setErrors(prev => ({ ...prev, monthlyPayment: validateMonthlyPayment(cleanValue, avgIncome) }));
   };
 
   const handleIncome1Change = (value: string) => {
     const cleanValue = value.replace(/[^\d]/g, '');
     setIncome1(formatAmount(cleanValue));
+    setErrors(prev => ({ ...prev, income1: validateIncome(cleanValue) }));
   };
 
   const handleIncome2Change = (value: string) => {
     const cleanValue = value.replace(/[^\d]/g, '');
     setIncome2(formatAmount(cleanValue));
+    setErrors(prev => ({ ...prev, income2: validateIncome(cleanValue) }));
   };
 
   const handleIncome3Change = (value: string) => {
     const cleanValue = value.replace(/[^\d]/g, '');
     setIncome3(formatAmount(cleanValue));
+    setErrors(prev => ({ ...prev, income3: validateIncome(cleanValue) }));
   };
 
   const handleAverageIncomeChange = (value: string) => {
     const cleanValue = value.replace(/[^\d]/g, '');
     setAverageIncome(formatAmount(cleanValue));
+    setErrors(prev => ({ ...prev, averageIncome: validateIncome(cleanValue) }));
   };
 
   // Конвертация периода в месяцы
@@ -165,249 +198,263 @@ export const useBorrowerTest = () => {
     return type === 'year' ? numValue * 12 : numValue;
   };
 
-  // Обработчик изменения капитализации
-  const handleCapitalizationChange = (value: boolean) => {
-    if (value) {
-      // Если включаем капитализацию, сразу устанавливаем месячный период по умолчанию
-      setIsCapitalized(true);
-      setCapitalizationPeriod('monthly');
-    } else {
-      // Если выключаем, сбрасываем оба значения
-      setIsCapitalized(false);
-      setCapitalizationPeriod(null);
-    }
-  };
-
-  // Расчет процентов и графика
+  // Расчет кредитных параметров
   useEffect(() => {
     console.log('=== ВЫЗОВ USEEFFECT ===');
-    console.log('isCapitalized:', isCapitalized);
-    console.log('capitalizationPeriod:', capitalizationPeriod);
-    console.log('Все зависимости:', { amount, term, periodType, rate, startDate });
+    console.log('Все зависимости:', { amount, term, periodType, rate });
 
-    const calculateDeposit = () => {
-      console.log('=== НАЧАЛО РАСЧЕТА ===');
+    const calculateLoan = () => {
+      console.log('=== НАЧАЛО РАСЧЕТА КРЕДИТА ===');
       // Проверяем наличие ошибок
       if (Object.values(errors).some(error => error !== undefined)) {
         console.log('Есть ошибки валидации, прерываем расчет');
         return;
       }
 
-      const depositAmount = parseFloat(amount.replace(/[^\d]/g, ''));
-      const depositRate = parseFloat(rate.replace(',', '.'));
+      const loanAmount = parseFloat(amount.replace(/[^\d]/g, ''));
+      const loanRate = parseFloat(rate.replace(',', '.'));
       const months = convertToMonths(term, periodType);
-      const years = months / 12;
+      const monthlyRate = loanRate / 100 / 12; // Месячная процентная ставка
 
-      if (isNaN(depositAmount) || isNaN(depositRate) || months <= 0) {
+      if (isNaN(loanAmount) || isNaN(loanRate) || months <= 0) {
         console.log('Некорректные входные данные, прерываем расчет');
         return;
       }
 
       console.log('Входные данные для расчета:');
-      console.log('- Сумма:', depositAmount);
-      console.log('- Ставка:', depositRate);
+      console.log('- Сумма:', loanAmount);
+      console.log('- Ставка:', loanRate);
       console.log('- Месяцев:', months);
-      console.log('- Лет:', years);
+      console.log('- Месячная ставка:', monthlyRate);
 
-      let totalAmount = depositAmount;
-      let totalProfit = 0;
-      const scheduleItems: ScheduleItem[] = [];
-      let currentDate = new Date(startDate);
-
-      // Добавляем начальную запись
-      scheduleItems.push({
-        date: currentDate.toLocaleDateString('ru-RU'),
-        interest: 0,
-        balance: depositAmount,
-        isCapitalization: false
-      });
-
-      if (isCapitalized && capitalizationPeriod) {
-        console.log('=== ВХОДНЫЕ ДАННЫЕ ===');
-        console.log('Начальная сумма:', depositAmount);
-        console.log('Срок в месяцах:', months);
-        console.log('Ставка:', depositRate);
-        console.log('Период капитализации:', capitalizationPeriod);
-        console.log('Дата начала:', startDate);
-
-        const monthsInPeriod = { monthly: 1, quarterly: 3, yearly: 12 }[capitalizationPeriod];
-        
-        // ОБРАБОТКА ИСКЛЮЧЕНИЙ: Проверяем, возможна ли капитализация
-        const isCapitalizationPossible = months >= monthsInPeriod;
-        
-        if (!isCapitalizationPossible) {
-          console.log('=== ИСКЛЮЧЕНИЕ: Срок меньше периода капитализации ===');
-          console.log(`Срок: ${months} месяцев, Период капитализации: ${monthsInPeriod} месяцев`);
-          
-          // Рассчитываем как простые проценты
-          const yearlyProfit = depositAmount * (depositRate / 100);
-          const monthlyProfit = yearlyProfit / 12;
-          totalProfit = monthlyProfit * months;
-          totalAmount = depositAmount + totalProfit;
-          
-          // Эффективная ставка = номинальной ставке
-          setEffectiveRate(Number(depositRate));
-          
-          // Создаем график как для простых процентов
-          for (let i = 1; i <= months; i++) {
-            currentDate = new Date(startDate);
-            currentDate.setMonth(currentDate.getMonth() + i);
-            
-            scheduleItems.push({
-              date: currentDate.toLocaleDateString('ru-RU'),
-              interest: monthlyProfit,
-              balance: depositAmount + (monthlyProfit * i),
-              isCapitalization: false
-            });
-          }
-        } else {
-          // Обычный расчет с капитализацией
-          let currentAmount = depositAmount;
-          let currentDateCalc = new Date(startDate);
-          let remainingMonths = months;
-
-          // Используем правильную формулу сложного процента
-          // Для разных периодов капитализации используем разные подходы
-          if (capitalizationPeriod === 'monthly') {
-            // Ежемесячная капитализация: FV = PV * (1 + r/12)^(12*t)
-            totalAmount = depositAmount * Math.pow(1 + depositRate / 100 / 12, months);
-          } else if (capitalizationPeriod === 'quarterly') {
-            // Ежеквартальная капитализация: FV = PV * (1 + r/4)^(4*t)
-            const quarters = months / 3;
-            totalAmount = depositAmount * Math.pow(1 + depositRate / 100 / 4, quarters);
-          } else if (capitalizationPeriod === 'yearly') {
-            // Ежегодная капитализация: FV = PV * (1 + r)^t
-            totalAmount = depositAmount * Math.pow(1 + depositRate / 100, years);
-          }
-          
-          totalProfit = totalAmount - depositAmount;
-
-          // Создаём упрощённый график для отображения
-          const periodsCount = Math.ceil(months / monthsInPeriod);
-          for (let i = 1; i <= periodsCount; i++) {
-            const periodMonths = Math.min(i * monthsInPeriod, months);
-            
-            // Используем ту же формулу что и в основном расчете
-            let periodAmount;
-            if (capitalizationPeriod === 'monthly') {
-              periodAmount = depositAmount * Math.pow(1 + depositRate / 100 / 12, periodMonths);
-            } else if (capitalizationPeriod === 'quarterly') {
-              const quarters = periodMonths / 3;
-              periodAmount = depositAmount * Math.pow(1 + depositRate / 100 / 4, quarters);
-            } else if (capitalizationPeriod === 'yearly') {
-              const years = periodMonths / 12;
-              periodAmount = depositAmount * Math.pow(1 + depositRate / 100, years);
-            }
-            
-            const periodInterest = i === 1 ? periodAmount - depositAmount : periodAmount - scheduleItems[scheduleItems.length - 1].balance;
-            
-            currentDate = new Date(startDate);
-            currentDate.setMonth(currentDate.getMonth() + periodMonths);
-            
-            scheduleItems.push({
-              date: currentDate.toLocaleDateString('ru-RU'),
-              interest: periodInterest,
-              balance: periodAmount,
-              isCapitalization: true
-            });
-          }
-
-          console.log('=== РЕЗУЛЬТАТЫ РАСЧЕТА ===');
-          console.log('Итоговая сумма:', totalAmount);
-          console.log('Прибыль:', totalProfit);
-          console.log('Срок в годах:', years);
-          
-          // Расчет эффективной ставки для капитализации
-          if (years > 0) {
-            const averageAnnualReturn = (totalProfit / depositAmount / years) * 100;
-            console.log('Простая среднегодовая доходность:', averageAnnualReturn);
-            setEffectiveRate(Math.round(averageAnnualReturn * 100) / 100);
-          } else {
-            setEffectiveRate(Number(depositRate));
-          }
-        }
+      // Расчет ежемесячного платежа по формуле аннуитета
+      // PMT = P * [r(1+r)^n] / [(1+r)^n - 1]
+      let monthlyPaymentCalc = 0;
+      if (monthlyRate > 0) {
+        const denominator = Math.pow(1 + monthlyRate, months) - 1;
+        const numerator = monthlyRate * Math.pow(1 + monthlyRate, months);
+        monthlyPaymentCalc = loanAmount * (numerator / denominator);
       } else {
-        // Расчет без капитализации
-        const yearlyProfit = depositAmount * (depositRate / 100);
-        const monthlyProfit = yearlyProfit / 12;
-        totalProfit = monthlyProfit * months;
-        totalAmount = depositAmount + totalProfit;
-
-        console.log("Расчет без капитализации");
-
-        // Расчет графика платежей
-        for (let i = 1; i <= months; i++) {
-          currentDate = new Date(startDate);
-          currentDate.setMonth(currentDate.getMonth() + i);
-          
-          scheduleItems.push({
-            date: currentDate.toLocaleDateString('ru-RU'),
-            interest: monthlyProfit,
-            balance: depositAmount + (monthlyProfit * i),
-            isCapitalization: false
-          });
-        }
-
-        // ОБРАБОТКА ИСКЛЮЧЕНИЙ: Расчет эффективной ставки для простых процентов
-        if (years > 0) {
-          // Для сроков от 1 года - обычный расчет
-          const averageAnnualReturn = (totalProfit / depositAmount / years) * 100;
-          console.log('Простая среднегодовая доходность без капитализации:', averageAnnualReturn);
-          setEffectiveRate(Math.round(averageAnnualReturn * 100) / 100);
-        } else {
-          // ИСКЛЮЧЕНИЕ: Для сроков меньше года - эффективная ставка = номинальной
-          console.log('=== ИСКЛЮЧЕНИЕ: Срок меньше года без капитализации, эффективная ставка = номинальной ===');
-          setEffectiveRate(Number(depositRate));
-        }
+        // Если ставка 0%, то просто делим сумму на количество месяцев
+        monthlyPaymentCalc = loanAmount / months;
       }
 
-      setTotal(totalAmount);
-      setProfit(totalProfit);
-      setSchedule(scheduleItems);
-      
-      // Рассчитываем общую сумму начислений (исключая начальную запись)
-      const totalInterestSum = scheduleItems
-        .filter(item => item.interest > 0)
-        .reduce((sum, item) => sum + item.interest, 0);
-      setTotalInterest(totalInterestSum);
+      // Общая переплата
+      const totalPayment = monthlyPaymentCalc * months;
+      const totalInterestCalc = totalPayment - loanAmount;
+
+      // Расчет среднего дохода
+      const income1Value = parseFloat(income1.replace(/[^\d]/g, '')) || 0;
+      const income2Value = parseFloat(income2.replace(/[^\d]/g, '')) || 0;
+      const income3Value = parseFloat(income3.replace(/[^\d]/g, '')) || 0;
+      const averageIncomeCalc = (income1Value + income2Value + income3Value) / 3;
+
+      // Расчет долговой нагрузки (ПДН)
+      const debtBurdenCalc = averageIncomeCalc > 0 ? (monthlyPaymentCalc / averageIncomeCalc) * 100 : 0;
+
+      // Остаток дохода после выплат
+      const remainingIncomeCalc = averageIncomeCalc - monthlyPaymentCalc;
+
+      console.log('=== РЕЗУЛЬТАТЫ РАСЧЕТА ===');
+      console.log('Ежемесячный платеж:', monthlyPaymentCalc);
+      console.log('Общая переплата:', totalInterestCalc);
+      console.log('Средний доход:', averageIncomeCalc);
+      console.log('Долговая нагрузка:', debtBurdenCalc);
+      console.log('Остаток дохода:', remainingIncomeCalc);
+
+      // Устанавливаем результаты
+      setCalculatedMonthlyPayment(monthlyPaymentCalc);
+      setCalculatedAmount(loanAmount); // Для режима "Сумма" будет пересчитываться отдельно
+      setCalculatedTerm(months); // Для режима "Срок" будет пересчитываться отдельно
+      setTotalInterest(totalInterestCalc);
+      setDebtBurden(debtBurdenCalc);
+      setRemainingIncome(remainingIncomeCalc);
+      setAverageIncomeValue(averageIncomeCalc);
+
+      // Определяем статус кредитоспособности
+      const alert = calculateCreditworthiness(
+        monthlyPaymentCalc,
+        averageIncomeCalc,
+        debtBurdenCalc,
+        remainingIncomeCalc
+      );
+      setCreditAlert(alert);
     };
 
-    calculateDeposit();
-  }, [amount, term, periodType, rate, startDate, isCapitalized, capitalizationPeriod, errors]);
+    // Расчет максимальной суммы кредита (для режима "Сумма")
+    const calculateMaxAmount = () => {
+      const monthlyPaymentValue = parseFloat(monthlyPayment.replace(/[^\d]/g, ''));
+      const loanRate = parseFloat(rate.replace(',', '.'));
+      const months = convertToMonths(term, periodType);
+      const monthlyRate = loanRate / 100 / 12;
+
+      if (isNaN(monthlyPaymentValue) || isNaN(loanRate) || months <= 0 || monthlyPaymentValue <= 0) {
+        return;
+      }
+
+      // Обратная формула аннуитета: P = PMT * [(1+r)^n - 1] / [r(1+r)^n]
+      let maxAmount = 0;
+      if (monthlyRate > 0) {
+        const denominator = monthlyRate * Math.pow(1 + monthlyRate, months);
+        const numerator = Math.pow(1 + monthlyRate, months) - 1;
+        maxAmount = monthlyPaymentValue * (numerator / denominator);
+      } else {
+        maxAmount = monthlyPaymentValue * months;
+      }
+
+      setCalculatedAmount(maxAmount);
+      
+      // Пересчитываем переплату
+      const totalPayment = monthlyPaymentValue * months;
+      const totalInterestCalc = totalPayment - maxAmount;
+      setTotalInterest(totalInterestCalc);
+    };
+
+    // Расчет минимального срока (для режима "Срок")
+    const calculateMinTerm = () => {
+      const loanAmount = parseFloat(amount.replace(/[^\d]/g, ''));
+      const monthlyPaymentValue = parseFloat(monthlyPayment.replace(/[^\d]/g, ''));
+      const loanRate = parseFloat(rate.replace(',', '.'));
+      const monthlyRate = loanRate / 100 / 12;
+
+      if (isNaN(loanAmount) || isNaN(monthlyPaymentValue) || isNaN(loanRate) || 
+          loanAmount <= 0 || monthlyPaymentValue <= 0) {
+        return;
+      }
+
+      // Проверяем, что платеж больше месячных процентов
+      const monthlyInterest = loanAmount * monthlyRate;
+      if (monthlyPaymentValue <= monthlyInterest) {
+        console.log('Платеж слишком мал для погашения кредита');
+        return;
+      }
+
+      // Формула расчета срока: n = log(PMT / (PMT - P*r)) / log(1+r)
+      let minTermMonths = 0;
+      if (monthlyRate > 0) {
+        const numerator = Math.log(monthlyPaymentValue / (monthlyPaymentValue - loanAmount * monthlyRate));
+        const denominator = Math.log(1 + monthlyRate);
+        minTermMonths = numerator / denominator;
+      } else {
+        minTermMonths = loanAmount / monthlyPaymentValue;
+      }
+
+      // Округляем вверх до целого числа месяцев
+      minTermMonths = Math.ceil(minTermMonths);
+      
+      setCalculatedTerm(minTermMonths);
+      
+      // Пересчитываем переплату
+      const totalPayment = monthlyPaymentValue * minTermMonths;
+      const totalInterestCalc = totalPayment - loanAmount;
+      setTotalInterest(totalInterestCalc);
+    };
+
+    calculateLoan();
+    calculateMaxAmount();
+    calculateMinTerm();
+  }, [amount, term, periodType, rate, monthlyPayment, income1, income2, income3, averageIncome, errors]);
+
+  // Функция определения кредитоспособности
+  const calculateCreditworthiness = (
+    monthlyPayment: number,
+    averageIncome: number,
+    debtBurden: number,
+    remainingIncome: number
+  ): CreditAlert => {
+    // Проверяем базовые условия
+    const incomeToPaymentRatio = averageIncome > 0 ? averageIncome / monthlyPayment : 0;
+    const minLivingExpenses = 15000; // Минимум для жизни
+    
+    if (debtBurden < 20 && incomeToPaymentRatio >= 3 && remainingIncome >= minLivingExpenses * 1.5) {
+      return {
+        status: 'excellent',
+        title: 'Отличная кредитоспособность',
+        message: 'При указанных условиях у вас отличные шансы на одобрение кредита. Ваша долговая нагрузка минимальна, а доходы позволяют комфортно обслуживать кредит.',
+        recommendations: [
+          'Вы можете рассмотреть увеличение суммы кредита',
+          'Возможно получение более выгодной процентной ставки',
+          'Рассмотрите возможность досрочного погашения'
+        ],
+        color: 'green',
+        icon: '✅'
+      };
+    }
+    
+    if (debtBurden < 35 && incomeToPaymentRatio >= 2 && remainingIncome >= minLivingExpenses) {
+      return {
+        status: 'good',
+        title: 'Хорошие шансы на одобрение',
+        message: 'При соблюдении всех указанных вами условий вы сможете вовремя и в полном объеме вносить предусмотренные договором платежи.',
+        recommendations: [
+          'Ваш ежемесячный доход должен быть как минимум в два раза больше, чем ежемесячный платеж',
+          'Обратите внимание, что полученные рекомендации актуальны, если у вас нет других кредитов или займов',
+          'Рекомендуем создать финансовую подушку на 3-6 месяцев'
+        ],
+        color: 'yellow',
+        icon: '⚠️'
+      };
+    }
+    
+    if (debtBurden < 50 && incomeToPaymentRatio >= 1.5 && remainingIncome >= minLivingExpenses * 0.7) {
+      return {
+        status: 'moderate',
+        title: 'Умеренный риск',
+        message: 'Ваша долговая нагрузка находится в пограничной зоне. Кредит возможен, но требует осторожности в планировании бюджета.',
+        recommendations: [
+          'Рассмотрите увеличение срока кредита для снижения платежа',
+          'Попробуйте увеличить доходы или привлечь созаемщика',
+          'Рассмотрите уменьшение суммы кредита',
+          'Обязательно учтите все текущие обязательства'
+        ],
+        color: 'orange',
+        icon: '🔶'
+      };
+    }
+    
+    return {
+      status: 'high-risk',
+      title: 'Высокий риск отказа',
+      message: 'При текущих параметрах высока вероятность отказа в кредите. Долговая нагрузка превышает рекомендуемые значения.',
+      recommendations: [
+        'Увеличьте срок кредита для снижения ежемесячного платежа',
+        'Рассмотрите значительное уменьшение суммы кредита',
+        'Найдите способы увеличения доходов',
+        'Рассмотрите привлечение поручителя или созаемщика',
+        'Возможно, стоит отложить получение кредита'
+      ],
+      color: 'red',
+      icon: '❌'
+    };
+  };
 
   return {
-    // Существующие состояния
+    // Основные состояния
     amount,
     term,
     periodType,
     rate,
-    startDate,
-    total,
-    profit,
-    schedule,
-    totalInterest,
-    isVisible,
     errors,
-    effectiveRate,
 
-    // Существующие методы
+    // Результаты расчетов
+    calculatedMonthlyPayment,
+    calculatedAmount,
+    calculatedTerm,
+    totalInterest,
+    debtBurden,
+    remainingIncome,
+    averageIncomeValue,
+
+    // Методы изменения основных параметров
     setAmount: handleAmountChange,
     setTerm: handleTermChange,
     setPeriodType,
     setRate: handleRateChange,
-    setStartDate,
-    setIsVisible,
-    
-    // Новые состояния и методы для капитализации
-    isCapitalized,
-    capitalizationPeriod,
-    setIsCapitalized: handleCapitalizationChange,
-    setCapitalizationPeriod,
     
     // Утилиты
     formatNumber,
 
-    // Новые состояния и методы для теста заемщика
+    // Состояния и методы для теста заемщика
     monthlyPayment,
     income1,
     income2,
@@ -418,5 +465,8 @@ export const useBorrowerTest = () => {
     setIncome2: handleIncome2Change,
     setIncome3: handleIncome3Change,
     setAverageIncome: handleAverageIncomeChange,
+
+    // Состояния для уведомлений
+    creditAlert,
   };
 }; 
