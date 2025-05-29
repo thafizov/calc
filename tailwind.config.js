@@ -16,6 +16,7 @@ module.exports = {
         'deep-blue': '#15137C',
         'accent-blue': '#4C6FFF',
         'input-blue': '#EEF2FF',
+        'dark-blue': '#101568',
       },
       fontSize: {
         'head': '30px',
