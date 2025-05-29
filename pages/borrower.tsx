@@ -2,9 +2,7 @@ import React from 'react';
 import Head from 'next/head';
 import Image from 'next/image';
 import DurationSelect from '../components/DurationSelect';
-import DatePickerInput from '../components/DatePickerInput';
 import { useBorrowerTest } from '../hooks/useBorrowerTest';
-import CapitalizationSelect from '../components/CapitalizationSelect';
 
 // Типы для переключателя
 type TabType = 'monthly' | 'amount' | 'term';
@@ -37,16 +35,6 @@ export default function BorrowerTestPage() {
   // Состояние для переключателя
   const [activeTab, setActiveTab] = React.useState<TabType>('monthly');
 
-  // Состояния для вкладки "Сумма"
-  const [monthlyPayment, setMonthlyPayment] = React.useState('10000');
-  const [creditTerm, setCreditTerm] = React.useState('12');
-  const [amountRate, setAmountRate] = React.useState('15.00');
-
-  // Состояния для вкладки "Срок"
-  const [creditAmount, setCreditAmount] = React.useState('100000');
-  const [termPayment, setTermPayment] = React.useState('10000');
-  const [termRate, setTermRate] = React.useState('15.00');
-
   const {
     amount,
     term,
@@ -70,11 +58,18 @@ export default function BorrowerTestPage() {
     isCapitalized,
     setIsCapitalized,
     capitalizationPeriod,
-    setCapitalizationPeriod
+    setCapitalizationPeriod,
+    income1,
+    income2,
+    income3,
+    setIncome1,
+    setIncome2,
+    setIncome3,
+    monthlyPayment,
+    averageIncome,
+    setMonthlyPayment,
+    setAverageIncome
   } = useBorrowerTest();
-
-  // Ref для скролла к графику
-  const scheduleRef = React.useRef<HTMLDivElement>(null);
 
   // Получаем текущее окончание в зависимости от числа
   const currentPeriod = getWordForm(parseInt(term) || 0, periodType === 'year' ? 'year' : 'month');
@@ -93,10 +88,10 @@ export default function BorrowerTestPage() {
     // Если показываем график, скроллим к нему через небольшую задержку
     if (!isVisible && schedule.length > 0) {
       setTimeout(() => {
-        scheduleRef.current?.scrollIntoView({
-          behavior: 'smooth',
-          block: 'center'
-        });
+        // scheduleRef.current?.scrollIntoView({
+        //   behavior: 'smooth',
+        //   block: 'center'
+        // });
       }, 300);
     }
   };
@@ -125,7 +120,7 @@ export default function BorrowerTestPage() {
                 ТЕСТ ЗАЕМЩИКА
               </h1>
               
-              <p className="text-subhead mt-1.5 md:mt-6 lg:mt-10 mb-6 md:mb-8 lg:mb-0" style={{ color: '#1E1E1E' }}>
+              <p className="text-subhead mt-1.5 md:mt-6 lg:mt-10 mb-12 md:mb-8 lg:mb-0" style={{ color: '#1E1E1E' }}>
                 Хотите взять потребительский кредит, но не уверены, что справитесь с выплатами? 
                 Тест поможет оценить вашу долговую нагрузку и понять, какой кредит будет вам по силам.
               </p>
@@ -147,194 +142,310 @@ export default function BorrowerTestPage() {
           </div>
 
           {/* Переключатель табов */}
-          <div className="relative z-20 flex justify-center md:justify-start -mt-[68px]">
-            <button
-              type="button"
-              onClick={() => setActiveTab('monthly')}
-              className={`px-[60px] py-[25px] rounded-t-[30px] text-[18px] font-medium transition-all duration-200 whitespace-nowrap border-0 outline-none ${
-                activeTab === 'monthly'
-                  ? 'bg-white text-dark-blue'
-                  : 'bg-dark-blue text-white'
-              }`}
-            >
-              Ежемесячный платеж
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('amount')}
-              className={`px-[60px] py-[25px] rounded-t-[30px] text-[18px] font-medium transition-all duration-200 whitespace-nowrap border-0 outline-none ${
-                activeTab === 'amount'
-                  ? 'bg-white text-dark-blue'
-                  : 'bg-dark-blue text-white'
-              }`}
-            >
-              Сумма
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('term')}
-              className={`px-[60px] py-[25px] rounded-t-[30px] text-[18px] font-medium transition-all duration-200 whitespace-nowrap border-0 outline-none ${
-                activeTab === 'term'
-                  ? 'bg-white text-dark-blue'
-                  : 'bg-dark-blue text-white'
-              }`}
-            >
-              Срок
-            </button>
+          <div className="relative z-20 max-w-container mx-auto -mt-6 md:-mt-12 lg:-mt-[68px]">
+            <div className="flex w-full">
+              <button
+                type="button"
+                onClick={() => setActiveTab('monthly')}
+                className={`flex-1 md:flex-none md:px-8 md:py-5 lg:px-[60px] lg:py-[25px] py-3 rounded-t-[30px] text-sm md:text-base lg:text-[18px] font-medium transition-all duration-200 whitespace-nowrap border-0 outline-none ${
+                  activeTab === 'monthly'
+                    ? 'bg-white text-dark-blue'
+                    : 'bg-dark-blue text-white'
+                }`}
+              >
+                <span className="block md:hidden">Платеж</span>
+                <span className="hidden md:block">Ежемесячный платеж</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('amount')}
+                className={`flex-1 md:flex-none md:px-8 md:py-5 lg:px-[60px] lg:py-[25px] py-3 rounded-t-[30px] text-sm md:text-base lg:text-[18px] font-medium transition-all duration-200 whitespace-nowrap border-0 outline-none ${
+                  activeTab === 'amount'
+                    ? 'bg-white text-dark-blue'
+                    : 'bg-dark-blue text-white'
+                }`}
+              >
+                Сумма
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('term')}
+                className={`flex-1 md:flex-none md:px-8 md:py-5 lg:px-[60px] lg:py-[25px] py-3 rounded-t-[30px] text-sm md:text-base lg:text-[18px] font-medium transition-all duration-200 whitespace-nowrap border-0 outline-none ${
+                  activeTab === 'term'
+                    ? 'bg-white text-dark-blue'
+                    : 'bg-dark-blue text-white'
+                }`}
+              >
+                Срок
+              </button>
+            </div>
           </div>
 
           {/* Форма калькулятора */}
           <div className="relative z-10">
             <div className="relative z-10">
-              <div className="bg-white rounded-tr-[30px] rounded-br-[30px] rounded-bl-[30px] max-w-container mx-auto">
+              <div className="bg-white rounded-br-[30px] rounded-bl-[30px] md:rounded-tr-[30px] md:rounded-br-[30px] md:rounded-bl-[30px] max-w-container mx-auto">
                 <div className="max-w-container mx-auto px-6 md:px-10 lg:px-9 laptop:px-[60px] py-12 md:py-16 lg:py-14 laptop:py-[80px]">
                   <form className="space-y-8">
                     {/* Контент для вкладки "Ежемесячный платеж" */}
                     {activeTab === 'monthly' && (
-                      <div className="grid gap-4 md:gap-6 lg:gap-11 laptop:gap-[70px] grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                        {/* Сумма вклада */}
-                        <div className="space-y-2">
-                          <label className="block text-label text-gray-700 pl-10">
-                            Сумма вклада, ₽
-                          </label>
-                          <input
-                            type="text"
-                            value={amount}
-                            onChange={(e) => setAmount(e.target.value)}
-                            className="w-full h-[60px] pl-10 rounded-[30px] bg-[#E9F5FF] border-0 focus:ring-2 focus:ring-accent-blue text-[22px]"
-                          />
-                          {errors.amount && (
-                            <div className="text-red-500 text-sm pl-10">{errors.amount}</div>
-                          )}
-                        </div>
-
-                        {/* Срок вклада */}
-                        <div className="space-y-2">
-                          <label className="block text-label text-gray-700 pl-10">
-                            Срок вклада
-                          </label>
-                          <div className="relative">
+                      <div className="space-y-8">
+                        {/* Первая строка: основные параметры кредита */}
+                        <div className="grid gap-4 md:gap-6 lg:gap-11 laptop:gap-[70px] grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                          {/* Сумма кредита/займа */}
+                          <div className="space-y-2">
+                            <label className="block text-label text-gray-700 pl-10">
+                              Сумма кредита/займа, ₽
+                            </label>
                             <input
                               type="text"
-                              value={term}
-                              onChange={handleTermChange}
+                              value={amount}
+                              onChange={(e) => setAmount(e.target.value)}
                               className="w-full h-[60px] pl-10 rounded-[30px] bg-[#E9F5FF] border-0 focus:ring-2 focus:ring-accent-blue text-[22px]"
                             />
-                            <div className="absolute inset-y-0 right-0 flex items-center">
-                              <DurationSelect 
-                                value={currentPeriod} 
-                                onChange={handlePeriodChange}
-                                term={term}
+                          </div>
+
+                          {/* Срок кредита/займа */}
+                          <div className="space-y-2">
+                            <label className="block text-label text-gray-700 pl-10">
+                              Срок кредита/займа
+                            </label>
+                            <div className="relative">
+                              <input
+                                type="text"
+                                value={term}
+                                onChange={(e) => setTerm(e.target.value)}
+                                className="w-full h-[60px] pl-10 rounded-[30px] bg-[#E9F5FF] border-0 focus:ring-2 focus:ring-accent-blue text-[22px]"
                               />
+                              <div className="absolute inset-y-0 right-0 flex items-center">
+                                <DurationSelect 
+                                  value={getWordForm(parseInt(term) || 0, periodType)} 
+                                  onChange={(value) => {
+                                    setPeriodType(value === 'год' || value === 'года' || value === 'лет' ? 'year' : 'month');
+                                  }}
+                                  term={term}
+                                />
+                              </div>
                             </div>
                           </div>
-                          {errors.term && (
-                            <div className="text-red-500 text-sm pl-10">{errors.term}</div>
-                          )}
+
+                          {/* Процентная ставка */}
+                          <div className="space-y-2">
+                            <label className="block text-label text-gray-700 pl-10">
+                              Процентная ставка, % годовых
+                            </label>
+                            <input
+                              type="text"
+                              value={rate}
+                              onChange={(e) => setRate(e.target.value)}
+                              className="w-full h-[60px] pl-10 rounded-[30px] bg-[#E9F5FF] border-0 focus:ring-2 focus:ring-accent-blue text-[22px]"
+                            />
+                          </div>
                         </div>
 
-                        {/* Процентная ставка */}
-                        <div className="space-y-2">
-                          <label className="block text-label text-gray-700 pl-10">
-                            Процентная ставка, % годовых
-                          </label>
-                          <input
-                            type="text"
-                            value={rate}
-                            onChange={(e) => setRate(e.target.value)}
-                            onBlur={(e) => {
-                              const value = e.target.value;
-                              if (value && !value.includes('.')) {
-                                setRate(`${value}.00`);
-                              } else if (value.endsWith('.')) {
-                                setRate(`${value}00`);
-                              } else if (value.includes('.') && value.split('.')[1].length < 2) {
-                                setRate(`${value}0`);
-                              }
-                            }}
-                            className="w-full h-[60px] pl-10 rounded-[30px] bg-[#E9F5FF] border-0 focus:ring-2 focus:ring-accent-blue text-[22px]"
-                          />
-                          {errors.rate && (
-                            <div className="text-red-500 text-sm pl-10">{errors.rate}</div>
-                          )}
+                        {/* Вторая строка: доходы */}
+                        <div className="grid gap-4 md:gap-6 lg:gap-11 laptop:gap-[70px] grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                          {/* Среднемес. доход за 1-й год */}
+                          <div className="space-y-2">
+                            <label className="block text-label text-gray-700 pl-10">
+                              Среднемес. доход за 1-й год, ₽
+                            </label>
+                            <input
+                              type="text"
+                              value={income1}
+                              onChange={(e) => setIncome1(e.target.value)}
+                              className="w-full h-[60px] pl-10 rounded-[30px] bg-[#E9F5FF] border-0 focus:ring-2 focus:ring-accent-blue text-[22px]"
+                            />
+                          </div>
+
+                          {/* Среднемес. доход за 2-й год */}
+                          <div className="space-y-2">
+                            <label className="block text-label text-gray-700 pl-10">
+                              Среднемес. доход за 2-й год, ₽
+                            </label>
+                            <input
+                              type="text"
+                              value={income2}
+                              onChange={(e) => setIncome2(e.target.value)}
+                              className="w-full h-[60px] pl-10 rounded-[30px] bg-[#E9F5FF] border-0 focus:ring-2 focus:ring-accent-blue text-[22px]"
+                            />
+                          </div>
+
+                          {/* Среднемес. доход за 3-й год */}
+                          <div className="space-y-2">
+                            <label className="block text-label text-gray-700 pl-10">
+                              Среднемес. доход за 3-й год, ₽
+                            </label>
+                            <input
+                              type="text"
+                              value={income3}
+                              onChange={(e) => setIncome3(e.target.value)}
+                              className="w-full h-[60px] pl-10 rounded-[30px] bg-[#E9F5FF] border-0 focus:ring-2 focus:ring-accent-blue text-[22px]"
+                            />
+                          </div>
                         </div>
                       </div>
                     )}
 
                     {/* Контент для вкладки "Сумма" */}
                     {activeTab === 'amount' && (
-                      <div className="grid gap-4 md:gap-6 lg:gap-11 laptop:gap-[70px] grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                        <div className="space-y-2">
-                          <label className="block text-label text-gray-700 pl-10">
-                            Ежемесячный платеж, ₽
-                          </label>
-                          <input
-                            type="text"
-                            value={monthlyPayment}
-                            onChange={(e) => setMonthlyPayment(e.target.value)}
-                            className="w-full h-[60px] pl-10 rounded-[30px] bg-[#E9F5FF] border-0 focus:ring-2 focus:ring-accent-blue text-[22px]"
-                          />
+                      <div className="space-y-8">
+                        {/* Первая строка: основные параметры кредита */}
+                        <div className="grid gap-4 md:gap-6 lg:gap-11 laptop:gap-[70px] grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                          {/* Ежемесячный платеж */}
+                          <div className="space-y-2">
+                            <label className="block text-label text-gray-700 pl-10">
+                              Ежемесячный платеж, ₽
+                            </label>
+                            <input
+                              type="text"
+                              value={monthlyPayment}
+                              onChange={(e) => setMonthlyPayment(e.target.value)}
+                              className="w-full h-[60px] pl-10 rounded-[30px] bg-[#E9F5FF] border-0 focus:ring-2 focus:ring-accent-blue text-[22px]"
+                            />
+                          </div>
+
+                          {/* Срок кредита/займа */}
+                          <div className="space-y-2">
+                            <label className="block text-label text-gray-700 pl-10">
+                              Срок кредита/займа
+                            </label>
+                            <div className="relative">
+                              <input
+                                type="text"
+                                value={term}
+                                onChange={(e) => setTerm(e.target.value)}
+                                className="w-full h-[60px] pl-10 rounded-[30px] bg-[#E9F5FF] border-0 focus:ring-2 focus:ring-accent-blue text-[22px]"
+                              />
+                              <div className="absolute inset-y-0 right-0 flex items-center">
+                                <DurationSelect 
+                                  value={getWordForm(parseInt(term) || 0, periodType)} 
+                                  onChange={(value) => {
+                                    setPeriodType(value === 'год' || value === 'года' || value === 'лет' ? 'year' : 'month');
+                                  }}
+                                  term={term}
+                                />
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Процентная ставка */}
+                          <div className="space-y-2">
+                            <label className="block text-label text-gray-700 pl-10">
+                              Процентная ставка, % годовых
+                            </label>
+                            <input
+                              type="text"
+                              value={rate}
+                              onChange={(e) => setRate(e.target.value)}
+                              className="w-full h-[60px] pl-10 rounded-[30px] bg-[#E9F5FF] border-0 focus:ring-2 focus:ring-accent-blue text-[22px]"
+                            />
+                          </div>
                         </div>
-                        <div className="space-y-2">
-                          <label className="block text-label text-gray-700 pl-10">
-                            Срок кредита
-                          </label>
-                          <input
-                            type="text"
-                            value={creditTerm}
-                            onChange={(e) => setCreditTerm(e.target.value)}
-                            className="w-full h-[60px] pl-10 rounded-[30px] bg-[#E9F5FF] border-0 focus:ring-2 focus:ring-accent-blue text-[22px]"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="block text-label text-gray-700 pl-10">
-                            Процентная ставка, % годовых
-                          </label>
-                          <input
-                            type="text"
-                            value={amountRate}
-                            onChange={(e) => setAmountRate(e.target.value)}
-                            className="w-full h-[60px] pl-10 rounded-[30px] bg-[#E9F5FF] border-0 focus:ring-2 focus:ring-accent-blue text-[22px]"
-                          />
+
+                        {/* Вторая строка: доходы */}
+                        <div className="grid gap-4 md:gap-6 lg:gap-11 laptop:gap-[70px] grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                          {/* Среднемес. доход за 1-й год */}
+                          <div className="space-y-2">
+                            <label className="block text-label text-gray-700 pl-10">
+                              Среднемес. доход за 1-й год, ₽
+                            </label>
+                            <input
+                              type="text"
+                              value={income1}
+                              onChange={(e) => setIncome1(e.target.value)}
+                              className="w-full h-[60px] pl-10 rounded-[30px] bg-[#E9F5FF] border-0 focus:ring-2 focus:ring-accent-blue text-[22px]"
+                            />
+                          </div>
+
+                          {/* Среднемес. доход за 2-й год */}
+                          <div className="space-y-2">
+                            <label className="block text-label text-gray-700 pl-10">
+                              Среднемес. доход за 2-й год, ₽
+                            </label>
+                            <input
+                              type="text"
+                              value={income2}
+                              onChange={(e) => setIncome2(e.target.value)}
+                              className="w-full h-[60px] pl-10 rounded-[30px] bg-[#E9F5FF] border-0 focus:ring-2 focus:ring-accent-blue text-[22px]"
+                            />
+                          </div>
+
+                          {/* Среднемес. доход за 3-й год */}
+                          <div className="space-y-2">
+                            <label className="block text-label text-gray-700 pl-10">
+                              Среднемес. доход за 3-й год, ₽
+                            </label>
+                            <input
+                              type="text"
+                              value={income3}
+                              onChange={(e) => setIncome3(e.target.value)}
+                              className="w-full h-[60px] pl-10 rounded-[30px] bg-[#E9F5FF] border-0 focus:ring-2 focus:ring-accent-blue text-[22px]"
+                            />
+                          </div>
                         </div>
                       </div>
                     )}
 
                     {/* Контент для вкладки "Срок" */}
                     {activeTab === 'term' && (
-                      <div className="grid gap-4 md:gap-6 lg:gap-11 laptop:gap-[70px] grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                        <div className="space-y-2">
-                          <label className="block text-label text-gray-700 pl-10">
-                            Сумма кредита, ₽
-                          </label>
-                          <input
-                            type="text"
-                            value={creditAmount}
-                            onChange={(e) => setCreditAmount(e.target.value)}
-                            className="w-full h-[60px] pl-10 rounded-[30px] bg-[#E9F5FF] border-0 focus:ring-2 focus:ring-accent-blue text-[22px]"
-                          />
+                      <div className="space-y-8">
+                        {/* Первая строка: основные параметры кредита */}
+                        <div className="grid gap-4 md:gap-6 lg:gap-11 laptop:gap-[70px] grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                          {/* Сумма кредита/займа */}
+                          <div className="space-y-2">
+                            <label className="block text-label text-gray-700 pl-10">
+                              Сумма кредита/займа, ₽
+                            </label>
+                            <input
+                              type="text"
+                              value={amount}
+                              onChange={(e) => setAmount(e.target.value)}
+                              className="w-full h-[60px] pl-10 rounded-[30px] bg-[#E9F5FF] border-0 focus:ring-2 focus:ring-accent-blue text-[22px]"
+                            />
+                          </div>
+
+                          {/* Ежемесячный платеж */}
+                          <div className="space-y-2">
+                            <label className="block text-label text-gray-700 pl-10">
+                              Ежемесячный платеж, ₽
+                            </label>
+                            <input
+                              type="text"
+                              value={monthlyPayment}
+                              onChange={(e) => setMonthlyPayment(e.target.value)}
+                              className="w-full h-[60px] pl-10 rounded-[30px] bg-[#E9F5FF] border-0 focus:ring-2 focus:ring-accent-blue text-[22px]"
+                            />
+                          </div>
+
+                          {/* Процентная ставка */}
+                          <div className="space-y-2">
+                            <label className="block text-label text-gray-700 pl-10">
+                              Процентная ставка, % годовых
+                            </label>
+                            <input
+                              type="text"
+                              value={rate}
+                              onChange={(e) => setRate(e.target.value)}
+                              className="w-full h-[60px] pl-10 rounded-[30px] bg-[#E9F5FF] border-0 focus:ring-2 focus:ring-accent-blue text-[22px]"
+                            />
+                          </div>
                         </div>
-                        <div className="space-y-2">
-                          <label className="block text-label text-gray-700 pl-10">
-                            Ежемесячный платеж, ₽
-                          </label>
-                          <input
-                            type="text"
-                            value={termPayment}
-                            onChange={(e) => setTermPayment(e.target.value)}
-                            className="w-full h-[60px] pl-10 rounded-[30px] bg-[#E9F5FF] border-0 focus:ring-2 focus:ring-accent-blue text-[22px]"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="block text-label text-gray-700 pl-10">
-                            Процентная ставка, % годовых
-                          </label>
-                          <input
-                            type="text"
-                            value={termRate}
-                            onChange={(e) => setTermRate(e.target.value)}
-                            className="w-full h-[60px] pl-10 rounded-[30px] bg-[#E9F5FF] border-0 focus:ring-2 focus:ring-accent-blue text-[22px]"
-                          />
+
+                        {/* Вторая строка: доход */}
+                        <div className="grid gap-4 md:gap-6 lg:gap-11 laptop:gap-[70px] grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                          {/* Среднемесячный доход */}
+                          <div className="space-y-2">
+                            <label className="block text-label text-gray-700 pl-10">
+                              Среднемесячный доход, ₽
+                            </label>
+                            <input
+                              type="text"
+                              value={averageIncome}
+                              onChange={(e) => setAverageIncome(e.target.value)}
+                              className="w-full h-[60px] pl-10 rounded-[30px] bg-[#E9F5FF] border-0 focus:ring-2 focus:ring-accent-blue text-[22px]"
+                            />
+                          </div>
                         </div>
                       </div>
                     )}
@@ -348,114 +459,70 @@ export default function BorrowerTestPage() {
                   {/* Результаты для вкладки "Ежемесячный платеж" */}
                   {activeTab === 'monthly' && (
                     <div className="grid gap-4 md:gap-6 lg:gap-11 laptop:gap-[70px] grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
-                      <div className="space-y-1">
-                        <div className="text-[18px] font-medium opacity-80 whitespace-nowrap">Ежемесячный платеж</div>
+                      <div className="space-y-1 flex flex-col items-start">
+                        <div className="text-[18px] font-medium opacity-80 leading-tight line-clamp-2 min-h-[44px] flex items-start">Ежемесячный платеж</div>
                         <div className="text-[28px] font-semibold whitespace-nowrap">8 991₽</div>
                       </div>
-                      <div className="space-y-1">
-                        <div className="text-[18px] font-medium opacity-80 whitespace-nowrap">Совокупный средний доход</div>
-                        <div className="text-[28px] font-semibold whitespace-nowrap">30 000₽</div>
+                      <div className="space-y-1 flex flex-col items-start">
+                        <div className="text-[18px] font-medium opacity-80 leading-tight line-clamp-2 min-h-[44px] flex items-start">Совокупный средний доход</div>
+                        <div className="text-[28px] font-semibold whitespace-nowrap">35 000₽</div>
                       </div>
-                      <div className="space-y-1">
-                        <div className="text-[18px] font-medium opacity-80 whitespace-nowrap">Налоговая нагрузка</div>
-                        <div className="text-[28px] font-semibold whitespace-nowrap">29%</div>
+                      <div className="space-y-1 flex flex-col items-start">
+                        <div className="text-[18px] font-medium opacity-80 leading-tight line-clamp-2 min-h-[44px] flex items-start">Налоговая нагрузка</div>
+                        <div className="text-[28px] font-semibold whitespace-nowrap">25.7%</div>
                       </div>
-                      <div className="space-y-1">
-                        <div className="text-[18px] font-medium opacity-80 whitespace-nowrap">Остаток ежемесячного дохода после выплат</div>
-                        <div className="text-[28px] font-semibold whitespace-nowrap">21 008₽</div>
+                      <div className="space-y-1 flex flex-col items-start">
+                        <div className="text-[18px] font-medium opacity-80 leading-tight line-clamp-2 min-h-[44px] flex items-start">Остаток ежемесячного дохода после выплат</div>
+                        <div className="text-[28px] font-semibold whitespace-nowrap">26 009₽</div>
                       </div>
                     </div>
                   )}
 
                   {/* Результаты для вкладки "Сумма" */}
                   {activeTab === 'amount' && (
-                    <div className="grid gap-4 md:gap-6 lg:gap-11 laptop:gap-[70px] grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
-                      <div className="space-y-1">
-                        <div className="text-[18px] font-medium opacity-80 whitespace-nowrap">Максимальная сумма кредита</div>
-                        <div className="text-[28px] font-semibold whitespace-nowrap">150 000₽</div>
+                    <div className="grid gap-4 md:gap-6 lg:gap-11 laptop:gap-[70px] grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
+                      <div className="space-y-1 flex flex-col items-start">
+                        <div className="text-[18px] font-medium opacity-80 leading-tight line-clamp-2 min-h-[44px] flex items-start">Сумма</div>
+                        <div className="text-[28px] font-semibold whitespace-nowrap">120 000₽</div>
                       </div>
-                      <div className="space-y-1">
-                        <div className="text-[18px] font-medium opacity-80 whitespace-nowrap">Переплата</div>
+                      <div className="space-y-1 flex flex-col items-start">
+                        <div className="text-[18px] font-medium opacity-80 leading-tight line-clamp-2 min-h-[44px] flex items-start">Совокупный средний доход</div>
+                        <div className="text-[28px] font-semibold whitespace-nowrap">35 000₽</div>
+                      </div>
+                      <div className="space-y-1 flex flex-col items-start">
+                        <div className="text-[18px] font-medium opacity-80 leading-tight line-clamp-2 min-h-[44px] flex items-start">Долговая нагрузка</div>
+                        <div className="text-[28px] font-semibold whitespace-nowrap">28.6%</div>
+                      </div>
+                      <div className="space-y-1 flex flex-col items-start">
+                        <div className="text-[18px] font-medium opacity-80 leading-tight line-clamp-2 min-h-[44px] flex items-start">Остаток ежемесячного дохода после выплат</div>
                         <div className="text-[28px] font-semibold whitespace-nowrap">25 000₽</div>
-                      </div>
-                      <div className="space-y-1">
-                        <div className="text-[18px] font-medium opacity-80 whitespace-nowrap">Общая сумма выплат</div>
-                        <div className="text-[28px] font-semibold whitespace-nowrap">175 000₽</div>
                       </div>
                     </div>
                   )}
 
                   {/* Результаты для вкладки "Срок" */}
                   {activeTab === 'term' && (
-                    <div className="grid gap-4 md:gap-6 lg:gap-11 laptop:gap-[70px] grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
-                      <div className="space-y-1">
-                        <div className="text-[18px] font-medium opacity-80 whitespace-nowrap">Срок кредита</div>
-                        <div className="text-[28px] font-semibold whitespace-nowrap">24 месяца</div>
+                    <div className="grid gap-4 md:gap-6 lg:gap-11 laptop:gap-[70px] grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
+                      <div className="space-y-1 flex flex-col items-start">
+                        <div className="text-[18px] font-medium opacity-80 leading-tight line-clamp-2 min-h-[44px] flex items-start">Срок</div>
+                        <div className="text-[28px] font-semibold whitespace-nowrap">12 месяцев</div>
                       </div>
-                      <div className="space-y-1">
-                        <div className="text-[18px] font-medium opacity-80 whitespace-nowrap">Переплата</div>
-                        <div className="text-[28px] font-semibold whitespace-nowrap">18 500₽</div>
+                      <div className="space-y-1 flex flex-col items-start">
+                        <div className="text-[18px] font-medium opacity-80 leading-tight line-clamp-2 min-h-[44px] flex items-start">Совокупный средний доход</div>
+                        <div className="text-[28px] font-semibold whitespace-nowrap">35 000₽</div>
                       </div>
-                      <div className="space-y-1">
-                        <div className="text-[18px] font-medium opacity-80 whitespace-nowrap">Общая сумма выплат</div>
-                        <div className="text-[28px] font-semibold whitespace-nowrap">118 500₽</div>
+                      <div className="space-y-1 flex flex-col items-start">
+                        <div className="text-[18px] font-medium opacity-80 leading-tight line-clamp-2 min-h-[44px] flex items-start">Долговая нагрузка</div>
+                        <div className="text-[28px] font-semibold whitespace-nowrap">28.6%</div>
+                      </div>
+                      <div className="space-y-1 flex flex-col items-start">
+                        <div className="text-[18px] font-medium opacity-80 leading-tight line-clamp-2 min-h-[44px] flex items-start">Остаток ежемесячного дохода после выплат</div>
+                        <div className="text-[28px] font-semibold whitespace-nowrap">25 000₽</div>
                       </div>
                     </div>
                   )}
                 </div>
               </div>
-
-              {/* График начислений */}
-              {isVisible && schedule.length > 0 && (
-                <div 
-                  ref={scheduleRef}
-                  className="mt-8 bg-white rounded-[30px] shadow-lg max-w-container mx-auto opacity-0 animate-pulse" 
-                  style={{
-                    animation: 'slideDown 0.5s ease-out forwards'
-                  }}>
-                  <div className="max-w-container mx-auto px-6 md:px-10 lg:px-9 laptop:px-[60px] py-6 md:py-8 lg:py-6 laptop:py-[30px]">
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead>
-                          <tr>
-                            <th className="py-4 px-0 text-left font-bold text-accent-blue">Дата</th>
-                            <th className="py-4 px-6 text-right font-bold text-accent-blue">Начислено процентов</th>
-                            <th className="py-4 px-0 text-right font-bold text-accent-blue">Остаток вклада</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {schedule.map((item, index) => (
-                            <tr key={index} className="border-b border-gray-100">
-                              <td className="py-4 px-0">{item.date}</td>
-                              <td className="py-4 px-6 text-right whitespace-nowrap">{formatNumber(item.interest)} ₽</td>
-                              <td className="py-4 px-0 text-right whitespace-nowrap">{formatNumber(item.balance)} ₽</td>
-                            </tr>
-                          ))}
-                          {/* Итоговая строка с общей суммой начислений */}
-                          <tr className="border-t-2 border-accent-blue bg-blue-50">
-                            <td className="py-4 px-0 font-bold text-accent-blue">Итого начислено:</td>
-                            <td className="py-4 px-6 text-right whitespace-nowrap font-bold text-accent-blue">{formatNumber(totalInterest)} ₽</td>
-                            <td className="py-4 px-0"></td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                  
-                  <style jsx>{`
-                    @keyframes slideDown {
-                      from {
-                        opacity: 0;
-                        transform: translateY(-20px);
-                      }
-                      to {
-                        opacity: 1;
-                        transform: translateY(0);
-                      }
-                    }
-                  `}</style>
-                </div>
-              )}
             </div>
           </div>
         </div>

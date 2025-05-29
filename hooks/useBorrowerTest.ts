@@ -87,6 +87,13 @@ export const useBorrowerTest = () => {
   const [rate, setRate] = useState<string>('5.00');
   const [startDate, setStartDate] = useState<Date>(new Date());
   
+  // Новые состояния для теста заемщика
+  const [monthlyPayment, setMonthlyPayment] = useState<string>(formatAmount('10000'));
+  const [income1, setIncome1] = useState<string>(formatAmount('30000'));
+  const [income2, setIncome2] = useState<string>(formatAmount('35000'));
+  const [income3, setIncome3] = useState<string>(formatAmount('40000'));
+  const [averageIncome, setAverageIncome] = useState<string>(formatAmount('35000'));
+  
   // Новые состояния для капитализации
   const [isCapitalized, setIsCapitalized] = useState<boolean>(false);
   const [capitalizationPeriod, setCapitalizationPeriod] = useState<CapitalizationPeriod>(null);
@@ -124,6 +131,32 @@ export const useBorrowerTest = () => {
     } else {
       setErrors(prev => ({ ...prev, rate: undefined }));
     }
+  };
+
+  // Обработчики для новых полей теста заемщика
+  const handleMonthlyPaymentChange = (value: string) => {
+    const cleanValue = value.replace(/[^\d]/g, '');
+    setMonthlyPayment(formatAmount(cleanValue));
+  };
+
+  const handleIncome1Change = (value: string) => {
+    const cleanValue = value.replace(/[^\d]/g, '');
+    setIncome1(formatAmount(cleanValue));
+  };
+
+  const handleIncome2Change = (value: string) => {
+    const cleanValue = value.replace(/[^\d]/g, '');
+    setIncome2(formatAmount(cleanValue));
+  };
+
+  const handleIncome3Change = (value: string) => {
+    const cleanValue = value.replace(/[^\d]/g, '');
+    setIncome3(formatAmount(cleanValue));
+  };
+
+  const handleAverageIncomeChange = (value: string) => {
+    const cleanValue = value.replace(/[^\d]/g, '');
+    setAverageIncome(formatAmount(cleanValue));
   };
 
   // Конвертация периода в месяцы
@@ -373,5 +406,17 @@ export const useBorrowerTest = () => {
     
     // Утилиты
     formatNumber,
+
+    // Новые состояния и методы для теста заемщика
+    monthlyPayment,
+    income1,
+    income2,
+    income3,
+    averageIncome,
+    setMonthlyPayment: handleMonthlyPaymentChange,
+    setIncome1: handleIncome1Change,
+    setIncome2: handleIncome2Change,
+    setIncome3: handleIncome3Change,
+    setAverageIncome: handleAverageIncomeChange,
   };
 }; 
