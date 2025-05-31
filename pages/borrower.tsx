@@ -4,6 +4,7 @@ import Image from 'next/image';
 import DurationSelect from '../components/DurationSelect';
 import CreditAlert from '../components/CreditAlert';
 import FloatingCreditButton from '../components/FloatingCreditButton';
+import CalculatorPageLayout from '../components/shared/CalculatorPageLayout';
 import { useBorrowerTest } from '../hooks/useBorrowerTest';
 
 // Типы для переключателя
@@ -106,7 +107,7 @@ export default function BorrowerTestPage() {
   };
 
   return (
-    <>
+    <CalculatorPageLayout>
       <Head>
         <title>Тест заемщика</title>
         <meta 
@@ -115,7 +116,7 @@ export default function BorrowerTestPage() {
         />
       </Head>
       
-      <main className="min-h-screen" style={{ backgroundColor: '#CEE1F0' }}>
+      <div className="min-h-screen" style={{ backgroundColor: '#CEE1F0' }}>
         <div className="relative py-8 md:py-10 lg:py-10 laptop:py-12 px-4 max-w-container mx-auto lg:scale-90 lg:origin-top">
           <div className="block md:grid md:grid-cols-2 lg:grid-cols-12 gap-4 md:gap-6 lg:gap-8">
             {/* Левая колонка с текстом */}
@@ -551,7 +552,7 @@ export default function BorrowerTestPage() {
             </div>
           </div>
         </div>
-      </main>
-    </>
+      </div>
+    </CalculatorPageLayout>
   );
 } 

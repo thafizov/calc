@@ -1,9 +1,13 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import Head from 'next/head';
 import Image from 'next/image';
+import CalculatorPageLayout from '../components/shared/CalculatorPageLayout';
+import CalculatorForm from '../components/CalculatorForm';
+import ResultBlock from '../components/ResultBlock';
+import PaymentsTable from '../components/PaymentsTable';
+import { useDepositCalculator } from '../hooks/useDepositCalculator';
 import DurationSelect from '../components/DurationSelect';
 import DatePickerInput from '../components/DatePickerInput';
-import { useDepositCalculator } from '../hooks/useDepositCalculator';
 import CapitalizationSelect from '../components/CapitalizationSelect';
 import InputField from '../components/shared/InputField';
 import CheckboxField from '../components/shared/CheckboxField';
@@ -98,7 +102,7 @@ export default function DepositRefactoredPage() {
   };
 
   return (
-    <>
+    <CalculatorPageLayout>
       <Head>
         <title>Депозитный калькулятор</title>
         <meta 
@@ -107,7 +111,7 @@ export default function DepositRefactoredPage() {
         />
       </Head>
       
-      <main className="min-h-screen bg-deep-blue">
+      <div className="min-h-screen bg-deep-blue">
         <div className="relative py-8 md:py-10 lg:py-10 laptop:py-12 px-4 max-w-container mx-auto lg:scale-90 lg:origin-top">
           <div className="block md:grid md:grid-cols-2 lg:grid-cols-12 gap-4 md:gap-6 lg:gap-8">
             {/* Левая колонка с текстом */}
@@ -321,7 +325,7 @@ export default function DepositRefactoredPage() {
             </div>
           </div>
         </div>
-      </main>
-    </>
+      </div>
+    </CalculatorPageLayout>
   );
 } 

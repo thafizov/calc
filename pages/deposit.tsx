@@ -1,10 +1,11 @@
 import React from 'react';
 import Head from 'next/head';
 import Image from 'next/image';
+import CalculatorPageLayout from '../components/shared/CalculatorPageLayout';
 import DurationSelect from '../components/DurationSelect';
+import CapitalizationSelect from '../components/CapitalizationSelect';
 import DatePickerInput from '../components/DatePickerInput';
 import { useDepositCalculator } from '../hooks/useDepositCalculator';
-import CapitalizationSelect from '../components/CapitalizationSelect';
 
 // Функция для получения правильного окончания
 const getWordForm = (number: number, type: 'year' | 'month'): string => {
@@ -86,7 +87,7 @@ export default function DepositPage() {
   };
 
   return (
-    <>
+    <CalculatorPageLayout>
       <Head>
         <title>Депозитный калькулятор</title>
         <meta 
@@ -95,7 +96,7 @@ export default function DepositPage() {
         />
       </Head>
       
-      <main className="min-h-screen bg-deep-blue">
+      <div className="min-h-screen bg-deep-blue">
         <div className="relative py-8 md:py-10 lg:py-10 laptop:py-12 px-4 max-w-container mx-auto lg:scale-90 lg:origin-top">
           <div className="block md:grid md:grid-cols-2 lg:grid-cols-12 gap-4 md:gap-6 lg:gap-8">
             {/* Левая колонка с текстом */}
@@ -344,7 +345,7 @@ export default function DepositPage() {
             </div>
           </div>
         </div>
-      </main>
-    </>
+      </div>
+    </CalculatorPageLayout>
   );
 } 
