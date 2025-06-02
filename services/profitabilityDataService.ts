@@ -40,7 +40,8 @@ const loadData = async (): Promise<ApiData> => {
   }
 
   try {
-    const response = await fetch('/data/all_data_final.json');
+    // Используем полный путь с basePath для работы на GitHub Pages
+    const response = await fetch('/calc/data/all_data_final.json');
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
