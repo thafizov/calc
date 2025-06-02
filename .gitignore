@@ -69,7 +69,7 @@ guidelines.md
 setup.md
 
 # Output directories
-out/
+# out/ - убираем для деплоя на GitHub Pages
 iteration/
 /iteration/
 *iteration*
