@@ -139,7 +139,7 @@ export default function BorrowerTestPage() {
             {/* Правая колонка с картинкой */}
             <div className="hidden md:block lg:col-span-7 relative h-[300px] md:h-[400px]">
               <Image 
-                src="/calc/img/note.png"
+                src="/img/note.png"
                 alt="Банковские карты"
                 fill
                 style={{

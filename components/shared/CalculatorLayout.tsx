@@ -6,7 +6,7 @@ import { CalculatorLayoutProps } from '../../types/calculator';
 const CalculatorLayout: React.FC<CalculatorLayoutProps> = ({
   title,
   subtitle,
-  heroImage = '/calc/img/cards.png',
+  heroImage = '/img/cards.png',
   children,
   badge
 }) => {

@@ -19,7 +19,7 @@ const Footer: React.FC<FooterProps> = ({ hasScaling = false }) => {
             <Link href="/" className="flex items-center space-x-3 mb-4">
               <div className="relative w-10 h-10">
                 <Image
-                  src="/calc/img/logo.svg"
+                  src="/img/logo.svg"
                   alt="Logo"
                   width={40}
                   height={40}
@@ -27,12 +27,11 @@ const Footer: React.FC<FooterProps> = ({ hasScaling = false }) => {
                 />
               </div>
               <div className="flex flex-col">
-                <span className="text-gray-900 font-medium text-lg leading-none uppercase">Финансы</span>
-                <span className="text-gray-600 text-sm leading-none">— это искусство!</span>
+                <span className="text-gray-900 font-medium text-lg leading-none uppercase">Финансы — это искусство</span>
               </div>
             </Link>
             <p className="text-gray-600 text-sm leading-relaxed max-w-md">
-              Автономная некоммерческая организация по формированию финансово-грамотного общества среди детей и молодежи «Финансы — это искусство»
+              Автономная Некоммерческая Организация по формированию финансово-грамотного общества среди детей и молодежи «Финансы — это искусство»
             </p>
           </div>
 

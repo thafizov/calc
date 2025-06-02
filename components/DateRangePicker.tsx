@@ -21,7 +21,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
   startDate,
   endDate,
   onChange,
-  placeholder = 'мм.гг - мм.гг',
+  placeholder = 'мм.гг — мм.гг',
   className = '',
   error,
 }) => {
@@ -58,13 +58,13 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
     if (startDate && endDate) {
       const startFormatted = formatDateToMonthYear(startDate);
       const endFormatted = formatDateToMonthYear(endDate);
-      setInputValue(`${startFormatted} - ${endFormatted}`);
+      setInputValue(`${startFormatted} — ${endFormatted}`);
     } else if (startDate) {
       const startFormatted = formatDateToMonthYear(startDate);
-      setInputValue(`${startFormatted} - __.__`);
+      setInputValue(`${startFormatted} — __.__`);
     } else if (endDate) {
       const endFormatted = formatDateToMonthYear(endDate);
-      setInputValue(`__.__ - ${endFormatted}`);
+      setInputValue(`__.__ — ${endFormatted}`);
     } else {
       setInputValue('');
     }
@@ -72,9 +72,9 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
 
   // Парсинг введенного периода
   const parseDateRange = (rangeStr: string): [Date | null, Date | null] => {
-    if (!rangeStr.includes(' - ')) return [null, null];
+    if (!rangeStr.includes(' — ')) return [null, null];
 
-    const [startStr, endStr] = rangeStr.split(' - ');
+    const [startStr, endStr] = rangeStr.split(' — ');
     
     const parseMonthYear = (str: string): Date | null => {
       if (str === '__.__' || str.length !== 5 || str.includes('_')) return null;
@@ -98,6 +98,11 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
     const start = parseMonthYear(startStr);
     const end = parseMonthYear(endStr);
 
+    // ✅ ИСПРАВЛЕНИЕ: для endDate используем последний день месяца
+    if (end) {
+      end.setMonth(end.getMonth() + 1, 0); // Устанавливаем последний день месяца
+    }
+
     return [start, end];
   };
 
@@ -106,8 +111,8 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
     const newValue = e.target.value;
     setInputValue(newValue);
 
-    // Если ввод завершен, пробуем распарсить период
-    if (newValue.length === 13 && !newValue.includes('_')) {
+    // Если ввод завершен, пробуем распарсить период (длина 11: мм.гг — мм.гг)
+    if (newValue.length === 11 && !newValue.includes('_')) {
       const [start, end] = parseDateRange(newValue);
       if (start || end) {
         onChange(start, end);
@@ -115,7 +120,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
     }
 
     // Если поле очищено, сбрасываем значения
-    if (newValue === '' || newValue === '__.__ - __.__') {
+    if (newValue === '' || newValue === '__.__ — __.__') {
       onChange(null, null);
     }
   };
@@ -127,10 +132,16 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
 
   // Обработчик выбора конечной даты
   const handleEndDateChange = (date: Date | null) => {
-    onChange(startDate, date);
+    // ✅ ИСПРАВЛЕНИЕ: для endDate устанавливаем последний день месяца
+    let adjustedEndDate = date;
+    if (date) {
+      adjustedEndDate = new Date(date.getFullYear(), date.getMonth() + 1, 0); // Последний день месяца
+    }
+    
+    onChange(startDate, adjustedEndDate);
     
     // Закрываем календарь если выбраны обе даты
-    if (date && startDate) {
+    if (adjustedEndDate && startDate) {
       setIsOpen(false);
     }
   };
@@ -139,7 +150,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
     <div className="relative" ref={wrapperRef}>
       <div className="relative">
         <InputMask
-          mask="99.99 - 99.99"
+          mask="99.99 — 99.99"
           value={inputValue}
           onChange={handleInputChange}
           placeholder={placeholder}
@@ -153,7 +164,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
             className="h-[60px] w-[90px] rounded-[30px] bg-[#CEE1F0] flex items-center justify-center cursor-pointer"
           >
             <Image 
-              src="/calc/img/date.svg"
+              src="/img/date.svg"
               alt="Календарь"
               width={24}
               height={24}
@@ -313,45 +324,45 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
         /* 960px+: горизонтально, большие календари */  
         @media (min-width: 960px) {
           .calendar-dropdown {
-            padding: 16px;
+            padding: 20px;
           }
           
           .calendar-container {
-            gap: 24px;
+            gap: 32px;
           }
           
           .calendar-title {
-            font-size: 14px;
-            margin-bottom: 8px;
+            font-size: 16px;
+            margin-bottom: 10px;
           }
 
           .react-datepicker__header {
-            padding-top: 10px;
+            padding-top: 12px;
           }
           .react-datepicker__current-month {
-            font-size: 14px;
-            margin-bottom: 5px;
+            font-size: 16px;
+            margin-bottom: 8px;
           }
           .react-datepicker__month-container {
-            width: 200px;
+            width: 240px;
           }
           .react-datepicker__month .react-datepicker__month-text,
           .react-datepicker__month .react-datepicker__quarter-text {
-            width: 3rem;
-            margin: 2px;
-            height: 28px;
-            line-height: 28px;
-            font-size: 12px;
+            width: 3.5rem;
+            margin: 3px;
+            height: 32px;
+            line-height: 32px;
+            font-size: 14px;
           }
           .react-datepicker__year-text {
-            width: 3rem;
-            margin: 2px;
-            height: 28px;
-            line-height: 28px;
-            font-size: 12px;
+            width: 3.5rem;
+            margin: 3px;
+            height: 32px;
+            line-height: 32px;
+            font-size: 14px;
           }
           .react-datepicker__navigation {
-            top: 8px;
+            top: 10px;
           }
         }
       `}</style>

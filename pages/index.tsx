@@ -10,21 +10,21 @@ const calculators = [
     title: 'ДЕПОЗИТНЫЙ\nКАЛЬКУЛЯТОР',
     description: 'Рассчитайте доход по вкладу и сравните, где выгоднее хранить сбережения — с ежемесячной или капитализируемой выплатой процентов.',
     link: '/deposit',
-    image: '/calc/img/land1.png'
+    image: '/img/land1.png'
   },
   {
     id: 'profitability',
     title: 'КАЛЬКУЛЯТОР\nДОХОДНОСТИ',
     description: 'Узнайте, сколько вы могли бы заработать, если бы инвестировали в акции, облигации или другие активы в прошлом.',
     link: '/profitability',
-    image: '/calc/img/land2.png'
+    image: '/img/land2.png'
   },
   {
     id: 'borrower',
     title: 'ТЕСТ\nЗАЕМЩИКА',
     description: 'Оцените свою финансовую нагрузку — тест покажет, какой кредит будет вам по силам, и поможет избежать лишней долговой нагрузки.',
     link: '/borrower',
-    image: '/calc/img/land3.png'
+    image: '/img/land3.png'
   }
 ];
 
@@ -52,7 +52,7 @@ export default function HomePage() {
           <div className="flex justify-center mb-4 md:mb-6 lg:mb-[30px]">
             <div className="relative w-[75px] h-[75px]">
               <Image 
-                src="/calc/img/logo.svg"
+                src="/img/logo.svg"
                 alt="Logo"
                 fill
                 style={{
@@ -118,7 +118,7 @@ export default function HomePage() {
                     <div className="absolute top-[25px] right-[25px] z-10">
                       <div className="relative w-4 h-4">
                         <Image 
-                          src="/calc/img/arrow.svg"
+                          src="/img/arrow.svg"
                           alt="Arrow"
                           fill
                           style={{

@@ -1,0 +1,43 @@
+{
+  "analysis_date": "2025-06-02T19:00:12.095879",
+  "summary": {
+    "existing_files_more_current": true,
+    "main_file_needs_update": true,
+    "significant_differences_found": true,
+    "recommendation": "Use existing separate files"
+  },
+  "statistics": {
+    "ofz": {
+      "existing_periods": 305,
+      "main_periods": 298,
+      "common_periods": 298,
+      "anomalies": 70
+    },
+    "corporate": {
+      "existing_periods": 305,
+      "main_periods": 298,
+      "common_periods": 298,
+      "anomalies": 93
+    }
+  },
+  "only_in_existing": {
+    "ofz": [
+      "2024-11",
+      "2024-12",
+      "2025-01",
+      "2025-02",
+      "2025-03",
+      "2025-04",
+      "2025-05"
+    ],
+    "corporate": [
+      "2024-11",
+      "2024-12",
+      "2025-01",
+      "2025-02",
+      "2025-03",
+      "2025-04",
+      "2025-05"
+    ]
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "update_date": "2025-06-02T19:06:57.349664",
+  "status": "success",
+  "changes_summary": {
+    "sections_modified": 1,
+    "ofz_records": {
+      "before": 299,
+      "after": 306,
+      "added": 7
+    },
+    "corporate_records": {
+      "before": 299,
+      "after": 306,
+      "added": 7
+    }
+  },
+  "data_range": {
+    "ofz": {
+      "start_date": "31.12.1999",
+      "end_date": "31.05.2025"
+    },
+    "corporate": {
+      "start_date": "31.12.1999",
+      "end_date": "31.05.2025"
+    }
+  },
+  "final_values": {
+    "ofz_index": 504.4,
+    "corporate_index": 641.38
+  },
+  "backup_file": "data/all_data_final_backup_before_bonds_update.json"
+}

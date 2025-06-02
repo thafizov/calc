@@ -7,6 +7,7 @@ import InflationSelect from '../components/InflationSelect';
 import DepositTermSelect from '../components/DepositTermSelect';
 import BondTypeSelect from '../components/BondTypeSelect';
 import CustomCheckbox from '../components/CustomCheckbox';
+import ProfitabilityChart from '../components/ProfitabilityChart';
 import { useProfitabilityCalculator } from '../hooks/useProfitabilityCalculator';
 
 export default function ProfitabilityPage() {
@@ -16,6 +17,9 @@ export default function ProfitabilityPage() {
     startDate,
     endDate,
     errors,
+    
+    // Состояние загрузки
+    isLoading,
     
     // Настройки
     inflationEnabled,
@@ -35,6 +39,7 @@ export default function ProfitabilityPage() {
     
     // Результаты
     results,
+    monthlyChartData,
     
     // Обработчики
     setAmount,
@@ -43,9 +48,6 @@ export default function ProfitabilityPage() {
     // Утилиты
     formatNumber,
   } = useProfitabilityCalculator();
-
-  // Объединяем ошибки дат для DateRangePicker
-  const dateRangeError = errors.startDate || errors.endDate;
 
   // Ref для скролла к графику
   const scheduleRef = React.useRef<HTMLDivElement>(null);
@@ -100,7 +102,7 @@ export default function ProfitabilityPage() {
             {/* Правая колонка с картинкой */}
             <div className="hidden md:block lg:col-span-7 relative h-[300px] md:h-[400px]">
               <Image 
-                src="/calc/img/calc.png"
+                src="/img/calc.png"
                 alt="Калькулятор доходности"
                 fill
                 style={{
@@ -144,10 +146,10 @@ export default function ProfitabilityPage() {
                           startDate={startDate}
                           endDate={endDate}
                           onChange={setDateRange}
-                          error={dateRangeError}
+                          error={errors.startDate || errors.endDate}
                         />
-                        {dateRangeError && (
-                          <div className="text-red-500 text-sm pl-10">{dateRangeError}</div>
+                        {(errors.startDate || errors.endDate) && (
+                          <div className="text-red-500 text-sm pl-10">{errors.startDate || errors.endDate}</div>
                         )}
                       </div>
 
@@ -229,9 +231,23 @@ export default function ProfitabilityPage() {
                 </div>
               </div>
 
+              {/* Индикатор загрузки */}
+              {isLoading && (
+                <div className="text-white rounded-[30px] max-w-container mx-auto" style={{ backgroundColor: '#101568' }}>
+                  <div className="max-w-container mx-auto px-6 md:px-10 lg:px-9 laptop:px-[60px] py-6 md:py-8 lg:py-6 laptop:py-[30px]">
+                    <div className="text-center">
+                      <div className="text-[18px] font-medium opacity-80">Загружаем данные...</div>
+                      <div className="mt-4">
+                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Результаты */}
-              {results.length > 0 && (
-                <div className="space-y-4">
+              {!isLoading && results.length > 0 && (
+                <div>
                   {results.map((result, index) => (
                     <div key={index} className="text-white rounded-[30px] max-w-container mx-auto" style={{ backgroundColor: '#101568' }}>
                       <div className="max-w-container mx-auto px-6 md:px-10 lg:px-9 laptop:px-[60px] py-6 md:py-8 lg:py-6 laptop:py-[30px]">
@@ -269,33 +285,15 @@ export default function ProfitabilityPage() {
                 </div>
               )}
 
-              {/* График начислений - пока оставляем как есть для совместимости */}
-              {isVisible && (
-                <div 
-                  ref={scheduleRef}
-                  className="mt-8 bg-white rounded-[30px] shadow-lg max-w-container mx-auto opacity-0 animate-pulse" 
-                  style={{
-                    animation: 'slideDown 0.5s ease-out forwards'
-                  }}>
-                  <div className="max-w-container mx-auto px-6 md:px-10 lg:px-9 laptop:px-[60px] py-6 md:py-8 lg:py-6 laptop:py-[30px]">
-                    <div className="text-center py-8">
-                      <p className="text-gray-500">График начислений будет добавлен в следующей версии</p>
-                    </div>
-                  </div>
-                  
-                  <style jsx>{`
-                    @keyframes slideDown {
-                      from {
-                        opacity: 0;
-                        transform: translateY(-20px);
-                      }
-                      to {
-                        opacity: 1;
-                        transform: translateY(0);
-                      }
-                    }
-                  `}</style>
-                </div>
+              {/* График доходности */}
+              {!isLoading && results.length > 0 && (
+                <ProfitabilityChart
+                  results={results}
+                  inflationEnabled={inflationEnabled}
+                  startDate={startDate}
+                  endDate={endDate}
+                  monthlyChartData={monthlyChartData}
+                />
               )}
             </div>
           </div>

@@ -30,8 +30,55 @@ next-env.d.ts
 
 # prompts and setup files
 prompts/
+/prompts/
 setup/
 *.prompt
 *.setup
 SETUP.md
-PROMPTS.md 
+PROMPTS.md
+*prompt*
+*PROMPT*
+
+# Python scripts and data processing
+*.py
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+
+# Data files and directories
+data/
+*.json
+*.xlsx
+*.xls
+*.csv
+*.txt
+requirements.txt
+
+# Analysis and documentation
+*.md
+!README.md
+SUMMARY_*.md
+UX_*.md
+datatask.md
+guidelines.md
+setup.md
+
+# Output directories
+out/
+iteration/
+/iteration/
+*iteration*
+
+# System files
+.DS_Store
+*/.DS_Store
+
+# Specific files
+moex_*.json
+ipc_*.xlsx
+откуда* 

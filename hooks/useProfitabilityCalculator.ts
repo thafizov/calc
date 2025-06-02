@@ -1,10 +1,26 @@
 import { useState, useEffect } from 'react';
+import { 
+  fetchProfitabilityData, 
+  formatDateForApi,
+  parseApiDate,
+  calculateDepositProfitability,
+  calculateBondProfitability,
+  calculateStockProfitability,
+  calculateInflationAdjustedProfitability,
+  type ProfitabilityDataResponse
+} from '../services/profitabilityDataService';
 
 // Типы для ошибок валидации
 interface ProfitabilityErrors {
   amount?: string;
   startDate?: string;
   endDate?: string;
+}
+
+// Тип для месячных данных графика
+interface MonthlyChartData {
+  month: string; // "2024-01"
+  [instrumentName: string]: string | number; // "Депозит": 5.2, "Облигации": 3.1, etc.
 }
 
 // Тип для результатов расчета
@@ -14,6 +30,15 @@ interface ProfitabilityResult {
   profit: number;
   profitPercentage: number;
   inflationAdjustedProfit?: number;
+  monthlyData?: { month: string; cumulativeReturn: number; value?: number }[]; // Для графика
+}
+
+// Тип для параметров калькулятора
+interface CalculatorParams {
+  amount: string;
+  startDate: string;
+  endDate: string;
+  instruments: string[];
 }
 
 // Функция форматирования чисел
@@ -82,68 +107,58 @@ const calculateMonthsBetween = (startDate: Date, endDate: Date): number => {
          (endDate.getMonth() - startDate.getMonth());
 };
 
-// Функция расчета доходности депозита
-const calculateDepositReturn = (
-  amount: number, 
-  months: number, 
-  rate: number = 6.0, // Базовая ставка депозита
-  isCapitalized: boolean = false
-): number => {
-  const monthlyRate = rate / 100 / 12;
-  
-  if (isCapitalized) {
-    // Формула сложных процентов
-    return amount * Math.pow(1 + monthlyRate, months);
-  } else {
-    // Простые проценты
-    return amount * (1 + (rate / 100) * (months / 12));
-  }
-};
+// Экспортируем результаты хука
+export interface UseProfitabilityCalculatorResult {
+  results: ProfitabilityResult[];
+  isLoading: boolean;
+  error: string | null;
+  monthlyChartData: MonthlyChartData[];
+}
 
-// Функция расчета доходности облигаций (примерная)
-const calculateBondReturn = (
-  amount: number,
-  months: number,
-  bondType: string
-): number => {
-  let rate = 7.5; // Базовая доходность
+// Основной хук для расчетов
+export const useProfitabilityCalculator = (): {
+  // Состояния формы
+  amount: string;
+  startDate: Date | null;
+  endDate: Date | null;
+  errors: ProfitabilityErrors;
   
-  // Корректировка в зависимости от типа облигаций
-  switch (bondType) {
-    case 'ofz':
-      rate = 7.5;
-      break;
-    case 'corporate':
-      rate = 9.0;
-      break;
-    case 'municipal':
-      rate = 6.5;
-      break;
-    default:
-      rate = 7.5;
-  }
+  // Состояние загрузки
+  isLoading: boolean;
+  error: string | null;
   
-  const monthlyRate = rate / 100 / 12;
-  return amount * Math.pow(1 + monthlyRate, months);
-};
+  // Настройки
+  inflationEnabled: boolean;
+  setInflationEnabled: (enabled: boolean) => void;
+  depositTerm: string;
+  setDepositTerm: (term: string) => void;
+  bondType: string;
+  setBondType: (type: string) => void;
+  
+  // Инструменты
+  depositsChecked: boolean;
+  setDepositsChecked: (checked: boolean) => void;
+  bondsChecked: boolean;
+  setBondsChecked: (checked: boolean) => void;
+  stocksChecked: boolean;
+  setStocksChecked: (checked: boolean) => void;
+  
+  // Результаты
+  results: ProfitabilityResult[];
+  monthlyChartData: MonthlyChartData[];
+  
+  // Обработчики
+  setAmount: (value: string) => void;
+  setDateRange: (start: Date | null, end: Date | null) => void;
+  
+  // Утилиты
+  formatNumber: (num: number) => string;
+} => {
+  const [results, setResults] = useState<ProfitabilityResult[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [monthlyChartData, setMonthlyChartData] = useState<MonthlyChartData[]>([]);
 
-// Функция расчета доходности акций (примерная, очень волатильная)
-const calculateStockReturn = (
-  amount: number,
-  months: number
-): number => {
-  // Примерная средняя доходность фондового рынка 12% годовых
-  const rate = 12.0;
-  const monthlyRate = rate / 100 / 12;
-  
-  // Добавляем элемент случайности для имитации волатильности
-  const volatilityFactor = 0.8 + Math.random() * 0.4; // От 0.8 до 1.2
-  
-  return amount * Math.pow(1 + monthlyRate, months) * volatilityFactor;
-};
-
-// Основной хук
-export const useProfitabilityCalculator = () => {
   // Состояния формы
   const [amount, setAmount] = useState<string>(formatAmount('1000000'));
   const [startDate, setStartDate] = useState<Date | null>(new Date(2024, 5, 1)); // Июнь 2024
@@ -160,7 +175,6 @@ export const useProfitabilityCalculator = () => {
   const [stocksChecked, setStocksChecked] = useState<boolean>(false);
   
   // Состояния результатов
-  const [results, setResults] = useState<ProfitabilityResult[]>([]);
   const [errors, setErrors] = useState<ProfitabilityErrors>({});
 
   // Обработчики изменения значений с валидацией
@@ -197,116 +211,230 @@ export const useProfitabilityCalculator = () => {
     }));
   }, [startDate, endDate]);
 
-  // Вычисление результатов
+  // Вычисление результатов с реальными данными
   useEffect(() => {
-    const cleanAmount = amount.replace(/[^\d]/g, '');
-    const numAmount = parseInt(cleanAmount) || 0;
-    
-    if (numAmount === 0 || !startDate || !endDate) {
-      setResults([]);
-      return;
-    }
-
-    const months = calculateMonthsBetween(startDate, endDate);
-    if (months <= 0) {
-      setResults([]);
-      return;
-    }
-
-    const newResults: ProfitabilityResult[] = [];
-
-    // Расчет депозитов
-    if (depositsChecked) {
-      const finalAmount = calculateDepositReturn(numAmount, months, 6.0, true);
-      const profit = finalAmount - numAmount;
-      const profitPercentage = (profit / numAmount) * 100;
+    const calculateResults = async () => {
+      console.log('🔄 Starting calculation...');
       
-      let inflationAdjustedProfit;
-      if (inflationEnabled) {
-        const inflationRate = 4.0; // Предполагаемая инфляция 4% годовых
-        const realRate = 6.0 - inflationRate;
-        const realFinalAmount = calculateDepositReturn(numAmount, months, realRate, true);
-        inflationAdjustedProfit = ((realFinalAmount - numAmount) / numAmount) * 100;
+      const cleanAmount = amount.replace(/[^\d]/g, '');
+      const numAmount = parseInt(cleanAmount) || 0;
+      
+      console.log('💰 Amount:', numAmount);
+      console.log('📅 Dates:', { startDate, endDate });
+      console.log('🎯 Selected instruments:', { depositsChecked, bondsChecked, stocksChecked, inflationEnabled });
+      
+      if (numAmount === 0 || !startDate || !endDate) {
+        console.log('❌ Missing data, clearing results');
+        setResults([]);
+        return;
       }
 
-      newResults.push({
-        instrument: 'Депозит',
-        finalAmount,
-        profit,
-        profitPercentage,
-        inflationAdjustedProfit
-      });
-    }
+      // Проверяем валидность дат
+      const dateErrors = validateDates(startDate, endDate);
+      if (dateErrors.startDate || dateErrors.endDate) {
+        console.log('❌ Date validation errors:', dateErrors);
+        setResults([]);
+        return;
+      }
 
-    // Расчет облигаций
-    if (bondsChecked) {
-      const finalAmount = calculateBondReturn(numAmount, months, bondType);
-      const profit = finalAmount - numAmount;
-      const profitPercentage = (profit / numAmount) * 100;
+      console.log('⏳ Setting loading to true');
+      setIsLoading(true);
 
-      let inflationAdjustedProfit;
-      if (inflationEnabled) {
-        const inflationRate = 4.0; // Предполагаемая инфляция 4% годовых
-        // Получаем базовую ставку облигаций
-        let bondRate = 7.5;
-        switch (bondType) {
-          case 'ofz':
-            bondRate = 7.5;
-            break;
-          case 'corporate':
-            bondRate = 9.0;
-            break;
-          case 'municipal':
-            bondRate = 6.5;
-            break;
-          default:
-            bondRate = 7.5;
+      try {
+        // Определяем какие инструменты нужно загрузить
+        const instruments: string[] = [];
+        if (depositsChecked) instruments.push('deposits');
+        if (bondsChecked) instruments.push('bonds');
+        if (stocksChecked) instruments.push('stocks');
+        if (inflationEnabled) instruments.push('inflation');
+
+        console.log('📦 Instruments to load:', instruments);
+
+        if (instruments.length === 0) {
+          console.log('❌ No instruments selected');
+          setResults([]);
+          setIsLoading(false);
+          return;
         }
-        const realRate = bondRate - inflationRate;
-        const realFinalAmount = calculateBondReturn(numAmount, months, bondType);
-        // Пересчитываем с учетом реальной ставки
-        const realMonthlyRate = realRate / 100 / 12;
-        const realFinalAmountAdjusted = numAmount * Math.pow(1 + realMonthlyRate, months);
-        inflationAdjustedProfit = ((realFinalAmountAdjusted - numAmount) / numAmount) * 100;
+
+        // Загружаем данные
+        const requestData = {
+          startDate: formatDateForApi(startDate),
+          endDate: formatDateForApi(endDate),
+          instruments,
+          depositTerm,
+          bondType
+        };
+        
+        console.log('📡 Fetching data with request:', requestData);
+        console.log('🗓️ Actual dates used:', {
+          startDateObject: startDate?.toISOString(),
+          endDateObject: endDate?.toISOString(),
+          startDateFormatted: formatDateForApi(startDate),
+          endDateFormatted: formatDateForApi(endDate)
+        });
+        
+        const apiData = await fetchProfitabilityData(requestData);
+        
+        console.log('📊 Received data:', {
+          inflation: apiData.inflation?.length || 0,
+          deposits: apiData.deposits?.length || 0,
+          bonds: apiData.bonds?.length || 0,
+          stocks: apiData.stocks?.length || 0,
+        });
+
+        // Логируем примеры данных для каждого инструмента
+        if (apiData.deposits?.length) {
+          console.log('💳 Deposits data sample:', apiData.deposits.slice(0, 3));
+        }
+        if (apiData.bonds?.length) {
+          console.log('📈 Bonds data sample:', apiData.bonds.slice(0, 3));
+        }
+        if (apiData.stocks?.length) {
+          console.log('📊 Stocks data sample:', apiData.stocks.slice(0, 3));
+        }
+        if (apiData.inflation?.length) {
+          console.log('💹 Inflation data sample:', apiData.inflation.slice(0, 3));
+        }
+
+        const newResults: ProfitabilityResult[] = [];
+        let allMonthlyData: MonthlyChartData[] = [];
+
+        // Расчет депозитов
+        if (depositsChecked && apiData.deposits) {
+          console.log('🔢 Calculating deposits...');
+          const calculation = calculateDepositProfitability(numAmount, apiData.deposits);
+          console.log('💳 Deposit calculation result:', calculation);
+          
+          let inflationAdjustedProfit;
+          if (inflationEnabled && apiData.inflation) {
+            inflationAdjustedProfit = calculateInflationAdjustedProfitability(
+              calculation.profitPercentage, 
+              apiData.inflation
+            );
+            console.log('💹 Inflation adjusted profit:', inflationAdjustedProfit);
+          }
+
+          newResults.push({
+            instrument: 'Депозит',
+            finalAmount: calculation.finalAmount,
+            profit: calculation.profit,
+            profitPercentage: calculation.profitPercentage,
+            inflationAdjustedProfit,
+            monthlyData: calculation.monthlyData
+          });
+        }
+
+        // Расчет облигаций
+        if (bondsChecked && apiData.bonds) {
+          console.log('🔢 Calculating bonds...');
+          const calculation = calculateBondProfitability(numAmount, apiData.bonds);
+          console.log('📈 Bond calculation result:', calculation);
+          
+          let inflationAdjustedProfit;
+          if (inflationEnabled && apiData.inflation) {
+            inflationAdjustedProfit = calculateInflationAdjustedProfitability(
+              calculation.profitPercentage, 
+              apiData.inflation
+            );
+          }
+
+          newResults.push({
+            instrument: 'Облигации',
+            finalAmount: calculation.finalAmount,
+            profit: calculation.profit,
+            profitPercentage: calculation.profitPercentage,
+            inflationAdjustedProfit,
+            monthlyData: calculation.monthlyData
+          });
+        }
+
+        // Расчет акций
+        if (stocksChecked && apiData.stocks) {
+          console.log('🔢 Calculating stocks...');
+          const calculation = calculateStockProfitability(numAmount, apiData.stocks);
+          console.log('📊 Stock calculation result:', calculation);
+          
+          let inflationAdjustedProfit;
+          if (inflationEnabled && apiData.inflation) {
+            inflationAdjustedProfit = calculateInflationAdjustedProfitability(
+              calculation.profitPercentage, 
+              apiData.inflation
+            );
+          }
+
+          newResults.push({
+            instrument: 'Акции',
+            finalAmount: calculation.finalAmount,
+            profit: calculation.profit,
+            profitPercentage: calculation.profitPercentage,
+            inflationAdjustedProfit,
+            monthlyData: calculation.monthlyData
+          });
+        }
+
+        // Генерируем данные для графика
+        if (newResults.length > 0 && newResults[0].monthlyData) {
+          const months = newResults[0].monthlyData.map(d => d.month);
+          allMonthlyData = months.map((month, monthIndex) => {
+            const chartDataPoint: MonthlyChartData = { month };
+            
+            newResults.forEach(result => {
+              if (result.monthlyData) {
+                const monthData = result.monthlyData.find(d => d.month === month);
+                if (monthData) {
+                  // Обычная линия доходности
+                  chartDataPoint[result.instrument] = monthData.cumulativeReturn;
+                  
+                  // Линия с учетом инфляции (если включено и есть данные)
+                  if (inflationEnabled && result.inflationAdjustedProfit !== undefined && apiData.inflation) {
+                    // Рассчитываем накопленную инфляцию от начала периода до текущего месяца
+                    let cumulativeInflation = 1;
+                    
+                    // Берем только данные инфляции от начала периода до текущего месяца включительно
+                    for (let i = 0; i <= monthIndex && i < apiData.inflation.length; i++) {
+                      cumulativeInflation *= (1 + apiData.inflation[i].value);
+                    }
+                    
+                    // Применяем правильную формулу реальной доходности
+                    const nominalReturnDecimal = monthData.cumulativeReturn / 100;
+                    const realReturnDecimal = (1 + nominalReturnDecimal) / cumulativeInflation - 1;
+                    const realReturn = realReturnDecimal * 100;
+                    
+                    // Логируем только для первых нескольких месяцев для отладки
+                    if (monthIndex < 3) {
+                      console.log(`📊 Chart inflation calc for ${month}:`, {
+                        monthIndex,
+                        nominalReturn: monthData.cumulativeReturn.toFixed(2) + '%',
+                        cumulativeInflation: cumulativeInflation.toFixed(4),
+                        realReturn: realReturn.toFixed(2) + '%'
+                      });
+                    }
+                    
+                    chartDataPoint[`${result.instrument}_inflation`] = realReturn;
+                  }
+                }
+              }
+            });
+            
+            return chartDataPoint;
+          });
+        }
+
+        console.log('✅ Final results:', newResults);
+        console.log('📊 Chart data:', allMonthlyData.slice(0, 3));
+        setResults(newResults);
+        setMonthlyChartData(allMonthlyData);
+      } catch (error) {
+        console.error('❌ Error calculating profitability:', error);
+        setResults([]);
+      } finally {
+        console.log('⏹ Setting loading to false');
+        setIsLoading(false);
       }
+    };
 
-      newResults.push({
-        instrument: 'Облигации',
-        finalAmount,
-        profit,
-        profitPercentage,
-        inflationAdjustedProfit
-      });
-    }
-
-    // Расчет акций
-    if (stocksChecked) {
-      const finalAmount = calculateStockReturn(numAmount, months);
-      const profit = finalAmount - numAmount;
-      const profitPercentage = (profit / numAmount) * 100;
-
-      let inflationAdjustedProfit;
-      if (inflationEnabled) {
-        const inflationRate = 4.0; // Предполагаемая инфляция 4% годовых
-        const stockRate = 12.0; // Базовая доходность акций
-        const realRate = stockRate - inflationRate;
-        const realMonthlyRate = realRate / 100 / 12;
-        // Применяем тот же volatilityFactor что и в основном расчете
-        const volatilityFactor = 0.8 + Math.random() * 0.4;
-        const realFinalAmount = numAmount * Math.pow(1 + realMonthlyRate, months) * volatilityFactor;
-        inflationAdjustedProfit = ((realFinalAmount - numAmount) / numAmount) * 100;
-      }
-
-      newResults.push({
-        instrument: 'Акции',
-        finalAmount,
-        profit,
-        profitPercentage,
-        inflationAdjustedProfit
-      });
-    }
-
-    setResults(newResults);
+    calculateResults();
   }, [
     amount, 
     startDate, 
@@ -320,36 +448,28 @@ export const useProfitabilityCalculator = () => {
   ]);
 
   return {
-    // Состояния формы
+    results,
+    isLoading,
+    error,
+    monthlyChartData,
     amount,
     startDate,
     endDate,
     errors,
-    
-    // Настройки
     inflationEnabled,
     setInflationEnabled,
     depositTerm,
     setDepositTerm,
     bondType,
     setBondType,
-    
-    // Инструменты
     depositsChecked,
     setDepositsChecked,
     bondsChecked,
     setBondsChecked,
     stocksChecked,
     setStocksChecked,
-    
-    // Результаты
-    results,
-    
-    // Обработчики
     setAmount: handleAmountChange,
     setDateRange: handleDateRangeChange,
-    
-    // Утилиты
     formatNumber,
   };
 }; 

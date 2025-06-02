@@ -134,7 +134,7 @@ export default function DepositRefactoredPage() {
             {/* Правая колонка с картинкой */}
             <div className="hidden md:block lg:col-span-7 relative h-[300px] md:h-[400px]">
               <Image 
-                src="/calc/img/cards.png"
+                src="/img/cards.png"
                 alt="Банковские карты"
                 fill
                 style={{
