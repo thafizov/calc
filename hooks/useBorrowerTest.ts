@@ -75,7 +75,13 @@ export const formatNumber = (value: number): string => {
 // Форматирование суммы
 const formatAmount = (value: string): string => {
   const numbers = value.replace(/[^\d]/g, '');
-  const amount = parseInt(numbers) || 0;
+  
+  // Если нет цифр или только нули, возвращаем пустую строку
+  if (!numbers || parseInt(numbers) === 0) {
+    return '';
+  }
+  
+  const amount = parseInt(numbers);
   return new Intl.NumberFormat('ru-RU').format(amount);
 };
 
@@ -200,32 +206,15 @@ export const useBorrowerTest = () => {
 
   // Расчет кредитных параметров
   useEffect(() => {
-    console.log('=== ВЫЗОВ USEEFFECT ===');
-    console.log('Все зависимости:', { amount, term, periodType, rate });
-
     const calculateLoan = () => {
-      console.log('=== НАЧАЛО РАСЧЕТА КРЕДИТА ===');
-      // Проверяем наличие ошибок
-      if (Object.values(errors).some(error => error !== undefined)) {
-        console.log('Есть ошибки валидации, прерываем расчет');
-        return;
-      }
-
       const loanAmount = parseFloat(amount.replace(/[^\d]/g, ''));
       const loanRate = parseFloat(rate.replace(',', '.'));
       const months = convertToMonths(term, periodType);
       const monthlyRate = loanRate / 100 / 12; // Месячная процентная ставка
 
       if (isNaN(loanAmount) || isNaN(loanRate) || months <= 0) {
-        console.log('Некорректные входные данные, прерываем расчет');
         return;
       }
-
-      console.log('Входные данные для расчета:');
-      console.log('- Сумма:', loanAmount);
-      console.log('- Ставка:', loanRate);
-      console.log('- Месяцев:', months);
-      console.log('- Месячная ставка:', monthlyRate);
 
       // Расчет ежемесячного платежа по формуле аннуитета
       // PMT = P * [r(1+r)^n] / [(1+r)^n - 1]
@@ -254,13 +243,6 @@ export const useBorrowerTest = () => {
 
       // Остаток дохода после выплат
       const remainingIncomeCalc = averageIncomeCalc - monthlyPaymentCalc;
-
-      console.log('=== РЕЗУЛЬТАТЫ РАСЧЕТА ===');
-      console.log('Ежемесячный платеж:', monthlyPaymentCalc);
-      console.log('Общая переплата:', totalInterestCalc);
-      console.log('Средний доход:', averageIncomeCalc);
-      console.log('Долговая нагрузка:', debtBurdenCalc);
-      console.log('Остаток дохода:', remainingIncomeCalc);
 
       // Устанавливаем результаты
       setCalculatedMonthlyPayment(monthlyPaymentCalc);
@@ -325,7 +307,6 @@ export const useBorrowerTest = () => {
       // Проверяем, что платеж больше месячных процентов
       const monthlyInterest = loanAmount * monthlyRate;
       if (monthlyPaymentValue <= monthlyInterest) {
-        console.log('Платеж слишком мал для погашения кредита');
         return;
       }
 
@@ -353,7 +334,7 @@ export const useBorrowerTest = () => {
     calculateLoan();
     calculateMaxAmount();
     calculateMinTerm();
-  }, [amount, term, periodType, rate, monthlyPayment, income1, income2, income3, averageIncome, errors]);
+  }, [amount, term, periodType, rate, monthlyPayment, income1, income2, income3, averageIncome]);
 
   // Функция определения кредитоспособности
   const calculateCreditworthiness = (

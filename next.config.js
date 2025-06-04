@@ -2,7 +2,7 @@
 const nextConfig = {
   output: 'export',
   trailingSlash: true,
-  basePath: '/calc',
+  // basePath: '/calc', // Временно отключаем для development
   images: {
     unoptimized: true,
   },

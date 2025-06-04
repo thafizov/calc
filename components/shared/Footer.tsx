@@ -1,3 +1,4 @@
+import { getAssetPath } from "../../utils/paths";
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -19,7 +20,7 @@ const Footer: React.FC<FooterProps> = ({ hasScaling = false }) => {
             <Link href="/" className="flex items-center space-x-3 mb-4">
               <div className="relative w-10 h-10">
                 <Image
-                  src="/img/logo.svg"
+                  src={getAssetPath("/img/logo.svg")}
                   alt="Logo"
                   width={40}
                   height={40}

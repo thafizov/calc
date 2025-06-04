@@ -10,7 +10,7 @@ interface FloatingCreditButtonProps {
 const FloatingCreditButton: React.FC<FloatingCreditButtonProps> = ({ 
   alert, 
   onClick, 
-  isVisible 
+  isVisible
 }) => {
   const getBackgroundColor = (color: string) => {
     switch (color) {

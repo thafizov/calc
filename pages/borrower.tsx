@@ -1,3 +1,4 @@
+import { getAssetPath } from "../utils/paths";
 import React, { useRef } from 'react';
 import Head from 'next/head';
 import Image from 'next/image';
@@ -5,7 +6,9 @@ import DurationSelect from '../components/DurationSelect';
 import CreditAlert from '../components/CreditAlert';
 import FloatingCreditButton from '../components/FloatingCreditButton';
 import CalculatorPageLayout from '../components/shared/CalculatorPageLayout';
+import OffersBlock from '../components/shared/OffersBlock';
 import { useBorrowerTest } from '../hooks/useBorrowerTest';
+import { formatDecimal } from '../utils/formatNumber';
 
 // Типы для переключателя
 type TabType = 'monthly' | 'amount' | 'term';
@@ -117,7 +120,7 @@ export default function BorrowerTestPage() {
       </Head>
       
       <div className="min-h-screen" style={{ backgroundColor: '#CEE1F0' }}>
-        <div className="relative py-8 md:py-10 lg:py-10 laptop:py-12 px-4 max-w-container mx-auto lg:scale-90 lg:origin-top">
+        <div className="relative pt-8 md:pt-10 lg:pt-10 laptop:pt-12 px-4 max-w-container mx-auto lg:scale-90 lg:origin-top">
           <div className="block md:grid md:grid-cols-2 lg:grid-cols-12 gap-4 md:gap-6 lg:gap-8">
             {/* Левая колонка с текстом */}
             <div className="lg:col-span-5">
@@ -130,7 +133,7 @@ export default function BorrowerTestPage() {
                 ТЕСТ ЗАЕМЩИКА
               </h1>
               
-              <p className="text-subhead mt-1.5 md:mt-6 lg:mt-10 mb-12 md:mb-8 lg:mb-0" style={{ color: '#1E1E1E' }}>
+              <p className="text-subhead mt-1.5 md:mt-6 lg:mt-10 mb-12 md:mb-16 lg:mb-0" style={{ color: '#1E1E1E' }}>
                 Хотите взять потребительский кредит, но не уверены, что справитесь с выплатами? 
                 Тест поможет оценить вашу долговую нагрузку и понять, какой кредит будет вам по силам.
               </p>
@@ -139,7 +142,7 @@ export default function BorrowerTestPage() {
             {/* Правая колонка с картинкой */}
             <div className="hidden md:block lg:col-span-7 relative h-[300px] md:h-[400px]">
               <Image 
-                src="/img/note.png"
+                src={getAssetPath("/img/note.png")}
                 alt="Банковские карты"
                 fill
                 style={{
@@ -152,7 +155,7 @@ export default function BorrowerTestPage() {
           </div>
 
           {/* Переключатель табов */}
-          <div className="relative z-20 max-w-container mx-auto -mt-6 md:-mt-12 lg:-mt-[68px]">
+          <div className="relative z-20 max-w-container mx-auto -mt-4 md:-mt-8 lg:-mt-12">
             <div className="flex w-full">
               <button
                 type="button"
@@ -464,7 +467,7 @@ export default function BorrowerTestPage() {
               </div>
 
               {/* Результаты */}
-              <div className="text-white rounded-[30px] max-w-container mx-auto" style={{ backgroundColor: '#486FCF' }}>
+              <div className="text-white rounded-[30px] max-w-container mx-auto" style={{ backgroundColor: '#101568' }}>
                 <div className="max-w-container mx-auto px-6 md:px-10 lg:px-9 laptop:px-[60px] py-6 md:py-8 lg:py-6 laptop:py-[30px]">
                   {/* Результаты для вкладки "Ежемесячный платеж" */}
                   {activeTab === 'monthly' && (
@@ -479,7 +482,7 @@ export default function BorrowerTestPage() {
                       </div>
                       <div className="space-y-0 sm:space-y-1 flex flex-col items-start">
                         <div className="text-[18px] font-medium opacity-80 leading-tight line-clamp-2 min-h-[36px] sm:min-h-[44px] flex items-start">Долговая нагрузка</div>
-                        <div className="text-[28px] font-semibold whitespace-nowrap">{debtBurden.toFixed(1)}%</div>
+                        <div className="text-[28px] font-semibold whitespace-nowrap">{formatDecimal(debtBurden, 1)}%</div>
                       </div>
                       <div className="space-y-0 sm:space-y-1 flex flex-col items-start">
                         <div className="text-[18px] font-medium opacity-80 leading-tight line-clamp-2 min-h-[36px] sm:min-h-[44px] flex items-start">Остаток ежемесячного дохода после выплат</div>
@@ -501,7 +504,7 @@ export default function BorrowerTestPage() {
                       </div>
                       <div className="space-y-0 sm:space-y-1 flex flex-col items-start">
                         <div className="text-[18px] font-medium opacity-80 leading-tight line-clamp-2 min-h-[36px] sm:min-h-[44px] flex items-start">Долговая нагрузка</div>
-                        <div className="text-[28px] font-semibold whitespace-nowrap">{debtBurden.toFixed(1)}%</div>
+                        <div className="text-[28px] font-semibold whitespace-nowrap">{formatDecimal(debtBurden, 1)}%</div>
                       </div>
                       <div className="space-y-0 sm:space-y-1 flex flex-col items-start">
                         <div className="text-[18px] font-medium opacity-80 leading-tight line-clamp-2 min-h-[36px] sm:min-h-[44px] flex items-start">Остаток ежемесячного дохода после выплат</div>
@@ -523,7 +526,7 @@ export default function BorrowerTestPage() {
                       </div>
                       <div className="space-y-0 sm:space-y-1 flex flex-col items-start">
                         <div className="text-[18px] font-medium opacity-80 leading-tight line-clamp-2 min-h-[36px] sm:min-h-[44px] flex items-start">Долговая нагрузка</div>
-                        <div className="text-[28px] font-semibold whitespace-nowrap">{((parseFloat(monthlyPayment.replace(/[^\d]/g, '')) || 0) / (parseFloat(averageIncome.replace(/[^\d]/g, '')) || 1) * 100).toFixed(1)}%</div>
+                        <div className="text-[28px] font-semibold whitespace-nowrap">{formatDecimal(((parseFloat(monthlyPayment.replace(/[^\d]/g, '')) || 0) / (parseFloat(averageIncome.replace(/[^\d]/g, '')) || 1) * 100), 1)}%</div>
                       </div>
                       <div className="space-y-0 sm:space-y-1 flex flex-col items-start">
                         <div className="text-[18px] font-medium opacity-80 leading-tight line-clamp-2 min-h-[36px] sm:min-h-[44px] flex items-start">Остаток ежемесячного дохода после выплат</div>
@@ -536,23 +539,26 @@ export default function BorrowerTestPage() {
 
               {/* Уведомления о кредитоспособности */}
               {creditAlert && (
-                <div className="max-w-container mx-auto mt-6">
+                <div className="max-w-container mx-auto">
                   <CreditAlert ref={alertRef} alert={creditAlert} />
                 </div>
               )}
-
-              {/* Плавающая кнопка-индикатор */}
-              {creditAlert && (
-                <FloatingCreditButton
-                  alert={creditAlert}
-                  onClick={scrollToAlert}
-                  isVisible={true}
-                />
-              )}
+              
+              {/* Блок предложений */}
+              <OffersBlock type="credit" />
             </div>
           </div>
         </div>
       </div>
+      
+      {/* Плавающая кнопка-индикатор */}
+      {creditAlert && (
+        <FloatingCreditButton
+          alert={creditAlert}
+          onClick={scrollToAlert}
+          isVisible={true}
+        />
+      )}
     </CalculatorPageLayout>
   );
 } 

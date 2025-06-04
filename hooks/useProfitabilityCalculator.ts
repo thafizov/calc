@@ -50,6 +50,15 @@ const formatAmount = (value: string): string => {
   return number.toLocaleString('ru-RU');
 };
 
+// Функция для получения максимальной доступной даты (предыдущий месяц от текущего)
+const getMaxAvailableDate = (): Date => {
+  const now = new Date();
+  const maxDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  // Устанавливаем последний день предыдущего месяца
+  maxDate.setMonth(maxDate.getMonth() + 1, 0);
+  return maxDate;
+};
+
 // Функция валидации суммы
 const validateAmount = (value: string): string | undefined => {
   const cleanValue = value.replace(/[^\d]/g, '');
@@ -70,6 +79,7 @@ const validateAmount = (value: string): string | undefined => {
 // Функция валидации дат
 const validateDates = (startDate: Date | null, endDate: Date | null): { startDate?: string; endDate?: string } => {
   const errors: { startDate?: string; endDate?: string } = {};
+  const maxDate = getMaxAvailableDate();
   
   if (!startDate) {
     errors.startDate = 'Выберите начальную дату периода';
@@ -96,6 +106,15 @@ const validateDates = (startDate: Date | null, endDate: Date | null): { startDat
     if (diffInMonths > 360) {
       errors.endDate = 'Максимальный период 30 лет';
     }
+  }
+  
+  // Проверяем максимальную доступную дату
+  if (startDate && startDate > maxDate) {
+    errors.startDate = 'Начальная дата не может быть в будущем';
+  }
+  
+  if (endDate && endDate > maxDate) {
+    errors.endDate = 'Конечная дата не может быть в будущем';
   }
   
   return errors;
@@ -388,30 +407,40 @@ export const useProfitabilityCalculator = (): {
                   
                   // Линия с учетом инфляции (если включено и есть данные)
                   if (inflationEnabled && result.inflationAdjustedProfit !== undefined && apiData.inflation) {
-                    // Рассчитываем накопленную инфляцию от начала периода до текущего месяца
-                    let cumulativeInflation = 1;
+                    // Сортируем данные инфляции по дате для корректного расчета
+                    const sortedInflationData = [...apiData.inflation].sort((a, b) => 
+                      parseApiDate(a.date).getTime() - parseApiDate(b.date).getTime()
+                    );
                     
-                    // Берем только данные инфляции от начала периода до текущего месяца включительно
-                    for (let i = 0; i <= monthIndex && i < apiData.inflation.length; i++) {
-                      cumulativeInflation *= (1 + apiData.inflation[i].value);
+                    // НОВАЯ ЛОГИКА: рассчитываем накопленную инфляцию через индексы
+                    // Берем данные инфляции от начала периода до текущего месяца включительно
+                    const currentMonthInflationData = sortedInflationData.slice(0, monthIndex + 1);
+                    
+                    if (currentMonthInflationData.length > 0) {
+                      // Накопленная инфляция = текущий индекс / начальный индекс
+                      const startInflationIndex = currentMonthInflationData[0].value;
+                      const currentInflationIndex = currentMonthInflationData[currentMonthInflationData.length - 1].value;
+                      const cumulativeInflationMultiplier = currentInflationIndex / startInflationIndex;
+                      
+                      // Применяем правильную формулу реальной доходности
+                      const nominalReturnDecimal = monthData.cumulativeReturn / 100;
+                      const realReturnDecimal = (1 + nominalReturnDecimal) / cumulativeInflationMultiplier - 1;
+                      const realReturn = realReturnDecimal * 100;
+                      
+                      // Логируем только для первых нескольких месяцев для отладки
+                      if (monthIndex < 3) {
+                        console.log(`📊 Chart inflation calc for ${month}:`, {
+                          monthIndex,
+                          startInflationIndex: startInflationIndex.toFixed(2),
+                          currentInflationIndex: currentInflationIndex.toFixed(2),
+                          cumulativeInflationMultiplier: cumulativeInflationMultiplier.toFixed(4),
+                          nominalReturn: monthData.cumulativeReturn.toFixed(2) + '%',
+                          realReturn: realReturn.toFixed(2) + '%'
+                        });
+                      }
+                      
+                      chartDataPoint[`${result.instrument}_inflation`] = realReturn;
                     }
-                    
-                    // Применяем правильную формулу реальной доходности
-                    const nominalReturnDecimal = monthData.cumulativeReturn / 100;
-                    const realReturnDecimal = (1 + nominalReturnDecimal) / cumulativeInflation - 1;
-                    const realReturn = realReturnDecimal * 100;
-                    
-                    // Логируем только для первых нескольких месяцев для отладки
-                    if (monthIndex < 3) {
-                      console.log(`📊 Chart inflation calc for ${month}:`, {
-                        monthIndex,
-                        nominalReturn: monthData.cumulativeReturn.toFixed(2) + '%',
-                        cumulativeInflation: cumulativeInflation.toFixed(4),
-                        realReturn: realReturn.toFixed(2) + '%'
-                      });
-                    }
-                    
-                    chartDataPoint[`${result.instrument}_inflation`] = realReturn;
                   }
                 }
               }

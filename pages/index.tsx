@@ -1,3 +1,4 @@
+import { getAssetPath } from "../utils/paths";
 import React from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
@@ -52,7 +53,7 @@ export default function HomePage() {
           <div className="flex justify-center mb-4 md:mb-6 lg:mb-[30px]">
             <div className="relative w-[75px] h-[75px]">
               <Image 
-                src="/img/logo.svg"
+                src={getAssetPath("/img/logo.svg")}
                 alt="Logo"
                 fill
                 style={{
@@ -118,7 +119,7 @@ export default function HomePage() {
                     <div className="absolute top-[25px] right-[25px] z-10">
                       <div className="relative w-4 h-4">
                         <Image 
-                          src="/img/arrow.svg"
+                          src={getAssetPath("/img/arrow.svg")}
                           alt="Arrow"
                           fill
                           style={{

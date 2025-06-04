@@ -1,7 +1,9 @@
+import { getAssetPath } from "../utils/paths";
 import React from 'react';
 import Head from 'next/head';
 import Image from 'next/image';
 import CalculatorPageLayout from '../components/shared/CalculatorPageLayout';
+import OffersBlock from '../components/shared/OffersBlock';
 import DurationSelect from '../components/DurationSelect';
 import CapitalizationSelect from '../components/CapitalizationSelect';
 import DatePickerInput from '../components/DatePickerInput';
@@ -97,7 +99,7 @@ export default function DepositPage() {
       </Head>
       
       <div className="min-h-screen bg-deep-blue">
-        <div className="relative py-8 md:py-10 lg:py-10 laptop:py-12 px-4 max-w-container mx-auto lg:scale-90 lg:origin-top">
+        <div className="relative pt-8 md:pt-10 lg:pt-10 laptop:pt-12 px-4 max-w-container mx-auto lg:scale-90 lg:origin-top">
           <div className="block md:grid md:grid-cols-2 lg:grid-cols-12 gap-4 md:gap-6 lg:gap-8">
             {/* Левая колонка с текстом */}
             <div className="lg:col-span-5">
@@ -119,7 +121,7 @@ export default function DepositPage() {
             {/* Правая колонка с картинкой */}
             <div className="hidden md:block lg:col-span-7 relative h-[300px] md:h-[400px]">
               <Image 
-                src="/img/cards.png"
+                src={getAssetPath("/img/cards.png")}
                 alt="Банковские карты"
                 fill
                 style={{
@@ -295,11 +297,11 @@ export default function DepositPage() {
               {isVisible && schedule.length > 0 && (
                 <div 
                   ref={scheduleRef}
-                  className="mt-8 bg-white rounded-[30px] shadow-lg max-w-container mx-auto opacity-0 animate-pulse" 
+                  className="bg-white rounded-[30px] shadow-lg max-w-container mx-auto opacity-0 animate-pulse" 
                   style={{
                     animation: 'slideDown 0.5s ease-out forwards'
                   }}>
-                  <div className="max-w-container mx-auto px-6 md:px-10 lg:px-9 laptop:px-[60px] py-6 md:py-8 lg:py-6 laptop:py-[30px]">
+                  <div className="max-w-container mx-auto px-6 md:px-10 lg:px-9 laptop:px-[60px] pt-6 md:pt-8 lg:pt-6 laptop:pt-[30px] pb-6 md:pb-8 lg:pb-6 laptop:pb-[30px]">
                     <div className="overflow-x-auto">
                       <table className="w-full">
                         <thead>
@@ -344,6 +346,9 @@ export default function DepositPage() {
               )}
             </div>
           </div>
+          
+          {/* Блок предложений */}
+          <OffersBlock type="deposit" />
         </div>
       </div>
     </CalculatorPageLayout>

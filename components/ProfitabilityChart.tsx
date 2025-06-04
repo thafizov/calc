@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   LineChart,
   Line,
@@ -10,6 +10,7 @@ import {
   ResponsiveContainer,
   ReferenceLine
 } from 'recharts';
+import { formatDecimal } from '../utils/formatNumber';
 
 // Интерфейс для данных графика (совпадает с MonthlyChartData в хуке)
 interface ChartDataPoint {
@@ -74,7 +75,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
           
           return (
             <p key={index} style={{ color: entry.color }} className="text-xs md:text-sm leading-tight">
-              {`${displayName}: ${entry.value.toFixed(2)}%`}
+              {`${displayName}: ${formatDecimal(entry.value as number)}%`}
             </p>
           );
         })}
@@ -104,7 +105,7 @@ const ProfitabilityChart: React.FC<ProfitabilityChartProps> = ({
 
   return (
     <div className="bg-white rounded-[30px] shadow-lg max-w-container mx-auto">
-      <div className="max-w-container mx-auto px-3 md:px-6 lg:px-9 laptop:px-[60px] py-6 md:py-8 lg:py-6 laptop:py-[30px]">
+      <div className="max-w-container mx-auto px-3 md:px-6 lg:px-9 laptop:px-[60px] pt-6 md:pt-8 lg:pt-6 laptop:pt-[30px] pb-6 md:pb-8 lg:pb-6 laptop:pb-[30px]">
         <h3 className="text-[20px] md:text-[24px] font-semibold text-gray-900 mb-4 md:mb-6 text-center">
           График доходности инвестиций
         </h3>

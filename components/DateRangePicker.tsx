@@ -1,3 +1,4 @@
+import { getAssetPath } from "../utils/paths";
 import React, { useState, useEffect, useRef } from 'react';
 import DatePicker, { registerLocale } from 'react-datepicker';
 import InputMask from 'react-input-mask';
@@ -17,6 +18,15 @@ interface DateRangePickerProps {
   error?: string;
 }
 
+// Функция для получения максимальной доступной даты (предыдущий месяц от текущего)
+const getMaxAvailableDate = (): Date => {
+  const now = new Date();
+  const maxDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  // Устанавливаем последний день предыдущего месяца
+  maxDate.setMonth(maxDate.getMonth() + 1, 0);
+  return maxDate;
+};
+
 const DateRangePicker: React.FC<DateRangePickerProps> = ({
   startDate,
   endDate,
@@ -31,6 +41,8 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   // Реф для отслеживания кликов вне компонента
   const wrapperRef = useRef<HTMLDivElement>(null);
+  // Максимальная доступная дата
+  const maxDate = getMaxAvailableDate();
 
   // Обработчик клика вне компонента
   useEffect(() => {
@@ -72,12 +84,16 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
 
   // Парсинг введенного периода
   const parseDateRange = (rangeStr: string): [Date | null, Date | null] => {
-    if (!rangeStr.includes(' — ')) return [null, null];
+    if (!rangeStr.includes(' — ')) {
+      return [null, null];
+    }
 
     const [startStr, endStr] = rangeStr.split(' — ');
     
     const parseMonthYear = (str: string): Date | null => {
-      if (str === '__.__' || str.length !== 5 || str.includes('_')) return null;
+      if (str === '__.__' || str.length !== 5 || str.includes('_')) {
+        return null;
+      }
       
       const [month, year] = str.split('.');
       const fullYear = parseInt(year) + 2000; // Предполагаем 20XX год
@@ -87,7 +103,8 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
       if (
         parsedDate.getMonth() === parseInt(month) - 1 &&
         parsedDate.getFullYear() === fullYear &&
-        parseInt(month) >= 1 && parseInt(month) <= 12
+        parseInt(month) >= 1 && parseInt(month) <= 12 &&
+        parsedDate <= maxDate // Проверка максимальной даты
       ) {
         return parsedDate;
       }
@@ -101,6 +118,10 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
     // ✅ ИСПРАВЛЕНИЕ: для endDate используем последний день месяца
     if (end) {
       end.setMonth(end.getMonth() + 1, 0); // Устанавливаем последний день месяца
+      // Дополнительная проверка максимальной даты для конечной даты
+      if (end > maxDate) {
+        return [start, null];
+      }
     }
 
     return [start, end];
@@ -111,8 +132,8 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
     const newValue = e.target.value;
     setInputValue(newValue);
 
-    // Если ввод завершен, пробуем распарсить период (длина 11: мм.гг — мм.гг)
-    if (newValue.length === 11 && !newValue.includes('_')) {
+    // Если ввод завершен, пробуем распарсить период
+    if (newValue && !newValue.includes('_') && newValue.includes(' — ')) {
       const [start, end] = parseDateRange(newValue);
       if (start || end) {
         onChange(start, end);
@@ -125,8 +146,37 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
     }
   };
 
+  // Обработчик фокуса на поле ввода - автоматически открываем календарь
+  const handleInputFocus = () => {
+    // Синхронизируем данные перед открытием, если есть валидный ввод
+    if (inputValue && !inputValue.includes('_') && inputValue.includes(' — ')) {
+      const [start, end] = parseDateRange(inputValue);
+      if (start || end) {
+        onChange(start, end);
+      }
+    }
+    setIsOpen(true);
+  };
+
+  // ✅ НОВЫЙ: Обработчик открытия календаря с синхронизацией
+  const handleToggleCalendar = () => {
+    // Если календарь закрыт и мы его открываем, синхронизируем данные
+    if (!isOpen && inputValue && !inputValue.includes('_') && inputValue.includes(' — ')) {
+      const [start, end] = parseDateRange(inputValue);
+      if (start || end) {
+        // Синхронизируем перед открытием
+        onChange(start, end);
+      }
+    }
+    setIsOpen(!isOpen);
+  };
+
   // Обработчик выбора начальной даты
   const handleStartDateChange = (date: Date | null) => {
+    // Проверяем максимальную дату
+    if (date && date > maxDate) {
+      return; // Игнорируем выбор будущих дат
+    }
     onChange(date, endDate);
   };
 
@@ -136,6 +186,10 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
     let adjustedEndDate = date;
     if (date) {
       adjustedEndDate = new Date(date.getFullYear(), date.getMonth() + 1, 0); // Последний день месяца
+      // Проверяем максимальную дату
+      if (adjustedEndDate > maxDate) {
+        adjustedEndDate = maxDate;
+      }
     }
     
     onChange(startDate, adjustedEndDate);
@@ -153,6 +207,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
           mask="99.99 — 99.99"
           value={inputValue}
           onChange={handleInputChange}
+          onFocus={handleInputFocus}
           placeholder={placeholder}
           className={`w-full h-[60px] pl-10 pr-[120px] rounded-[30px] bg-[#E9F5FF] border-0 focus:ring-2 focus:ring-accent-blue text-[22px] ${className}`}
           maskChar="_"
@@ -160,11 +215,11 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
         <div className="absolute right-0 inset-y-0 flex items-center">
           <button
             type="button"
-            onClick={() => setIsOpen(!isOpen)}
+            onClick={handleToggleCalendar}
             className="h-[60px] w-[90px] rounded-[30px] bg-[#CEE1F0] flex items-center justify-center cursor-pointer"
           >
             <Image 
-              src="/img/date.svg"
+              src={getAssetPath("/img/date.svg")}
               alt="Календарь"
               width={24}
               height={24}
@@ -185,7 +240,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
                 inline
                 showMonthYearPicker
                 dateFormat="MM/yyyy"
-                maxDate={endDate || undefined}
+                maxDate={endDate || maxDate}
               />
             </div>
             
@@ -200,6 +255,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
                 showMonthYearPicker
                 dateFormat="MM/yyyy"
                 minDate={startDate || undefined}
+                maxDate={maxDate}
               />
             </div>
           </div>

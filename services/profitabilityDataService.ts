@@ -1,3 +1,5 @@
+import { getDataPath } from '../utils/paths';
+
 // Типы для данных
 export interface DataItem {
   date: string;
@@ -40,8 +42,8 @@ const loadData = async (): Promise<ApiData> => {
   }
 
   try {
-    // Используем полный путь с basePath для работы на GitHub Pages
-    const response = await fetch('/calc/data/all_data_final.json');
+    // Используем функцию для правильного пути
+    const response = await fetch(getDataPath('/data/all_data_extended_2025.json'));
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -393,22 +395,30 @@ export const calculateInflationAdjustedProfitability = (
     inflationPeriod: inflationData[0]?.date + ' - ' + inflationData[inflationData.length - 1]?.date
   });
 
-  // ⚠️ ВАЖНО: inflationData уже отфильтрован по периоду в fetchProfitabilityData
-  // Рассчитываем общую инфляцию только за заданный период (не за все годы!)
-  let totalInflation = 1;
-  for (const item of inflationData) {
-    totalInflation *= (1 + item.value); // item.value уже в десятичной дроби (например, 0.0233 для 2.33%)
-  }
+  // Сортируем данные по дате для корректного расчета
+  const sortedInflationData = [...inflationData].sort((a, b) => 
+    parseApiDate(a.date).getTime() - parseApiDate(b.date).getTime()
+  );
+
+  // ⚠️ НОВАЯ ЛОГИКА: inflationData теперь содержит индексы (например, 102.33, 103.39...)
+  // Рассчитываем общую инфляцию как отношение конечного индекса к начальному
+  const startInflationIndex = sortedInflationData[0].value;
+  const endInflationIndex = sortedInflationData[sortedInflationData.length - 1].value;
+  
+  // Общая инфляция за период = конечный индекс / начальный индекс
+  const totalInflationMultiplier = endInflationIndex / startInflationIndex;
   
   // Правильная формула реальной доходности: (1 + номинальная) / (1 + инфляция) - 1
   const nominalReturnDecimal = profitPercentage / 100; // Конвертируем проценты в десятичную дробь
-  const realReturnDecimal = (1 + nominalReturnDecimal) / totalInflation - 1;
+  const realReturnDecimal = (1 + nominalReturnDecimal) / totalInflationMultiplier - 1;
   
   const result = realReturnDecimal * 100; // Конвертируем обратно в проценты
   
   console.log('💹 Inflation adjustment result:', { 
-    totalInflation: totalInflation.toFixed(4),
-    totalInflationPercent: ((totalInflation - 1) * 100).toFixed(2) + '%',
+    startInflationIndex: startInflationIndex.toFixed(2),
+    endInflationIndex: endInflationIndex.toFixed(2),
+    totalInflationMultiplier: totalInflationMultiplier.toFixed(4),
+    totalInflationPercent: ((totalInflationMultiplier - 1) * 100).toFixed(2) + '%',
     nominalReturn: profitPercentage.toFixed(2) + '%',
     realReturn: result.toFixed(2) + '%',
     periodUsed: inflationData.length + ' months'

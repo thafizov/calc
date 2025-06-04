@@ -1,3 +1,4 @@
+import { getAssetPath } from "../../utils/paths";
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -153,7 +154,7 @@ const Header: React.FC<HeaderProps> = ({ hasScaling = false }) => {
           <Link href="/" className="flex items-center space-x-3 hover:opacity-90 transition-opacity">
             <div className="relative w-10 h-10">
               <Image
-                src="/img/logo.svg"
+                src={getAssetPath("/img/logo.svg")}
                 alt="Logo"
                 width={40}
                 height={40}

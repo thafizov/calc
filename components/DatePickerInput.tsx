@@ -1,3 +1,4 @@
+import { getAssetPath } from "../utils/paths";
 import React, { useState, useEffect, useRef } from 'react';
 import DatePicker, { registerLocale } from 'react-datepicker';
 import InputMask from 'react-input-mask';
@@ -132,7 +133,7 @@ const DatePickerInput: React.FC<DatePickerInputProps> = ({
             className="h-[60px] w-[90px] rounded-[30px] bg-[#CEE1F0] flex items-center justify-center cursor-pointer"
           >
             <Image 
-              src="/img/date.svg"
+              src={getAssetPath("/img/date.svg")}
               alt="Календарь"
               width={24}
               height={24}

@@ -1,7 +1,9 @@
+import { getAssetPath } from "../utils/paths";
 import React, { useState } from 'react';
 import Head from 'next/head';
 import Image from 'next/image';
 import CalculatorPageLayout from '../components/shared/CalculatorPageLayout';
+import OffersBlock from '../components/shared/OffersBlock';
 import DateRangePicker from '../components/DateRangePicker';
 import InflationSelect from '../components/InflationSelect';
 import DepositTermSelect from '../components/DepositTermSelect';
@@ -9,6 +11,7 @@ import BondTypeSelect from '../components/BondTypeSelect';
 import CustomCheckbox from '../components/CustomCheckbox';
 import ProfitabilityChart from '../components/ProfitabilityChart';
 import { useProfitabilityCalculator } from '../hooks/useProfitabilityCalculator';
+import { formatDecimal } from '../utils/formatNumber';
 
 export default function ProfitabilityPage() {
   const {
@@ -80,7 +83,7 @@ export default function ProfitabilityPage() {
       </Head>
       
       <div className="min-h-screen" style={{ backgroundColor: '#7880FF' }}>
-        <div className="relative py-8 md:py-10 lg:py-10 laptop:py-12 px-4 max-w-container mx-auto lg:scale-90 lg:origin-top">
+        <div className="relative pt-8 md:pt-10 lg:pt-10 laptop:pt-12 px-4 max-w-container mx-auto lg:scale-90 lg:origin-top">
           <div className="block md:grid md:grid-cols-2 lg:grid-cols-12 gap-4 md:gap-6 lg:gap-8">
             {/* Левая колонка с текстом */}
             <div className="lg:col-span-5">
@@ -102,7 +105,7 @@ export default function ProfitabilityPage() {
             {/* Правая колонка с картинкой */}
             <div className="hidden md:block lg:col-span-7 relative h-[300px] md:h-[400px]">
               <Image 
-                src="/img/calc.png"
+                src={getAssetPath("/img/calc.png")}
                 alt="Калькулятор доходности"
                 fill
                 style={{
@@ -115,7 +118,7 @@ export default function ProfitabilityPage() {
           </div>
 
           {/* Форма калькулятора */}
-          <div className="relative mt-4 md:mt-0 lg:-mt-8">
+          <div className="relative -mt-4 md:-mt-8 lg:-mt-12">
             <div className="relative z-10">
               <div className="bg-white rounded-[30px] shadow-lg max-w-container mx-auto">
                 <div className="max-w-container mx-auto px-6 md:px-10 lg:px-9 laptop:px-[60px] py-12 md:py-16 lg:py-14 laptop:py-[80px]">
@@ -234,7 +237,7 @@ export default function ProfitabilityPage() {
               {/* Индикатор загрузки */}
               {isLoading && (
                 <div className="text-white rounded-[30px] max-w-container mx-auto" style={{ backgroundColor: '#101568' }}>
-                  <div className="max-w-container mx-auto px-6 md:px-10 lg:px-9 laptop:px-[60px] py-6 md:py-8 lg:py-6 laptop:py-[30px]">
+                  <div className="max-w-container mx-auto px-6 md:px-10 lg:px-9 laptop:px-[60px] pt-6 md:pt-8 lg:pt-6 laptop:pt-[30px] pb-6 md:pb-8 lg:pb-6 laptop:pb-[30px]">
                     <div className="text-center">
                       <div className="text-[18px] font-medium opacity-80">Загружаем данные...</div>
                       <div className="mt-4">
@@ -250,7 +253,7 @@ export default function ProfitabilityPage() {
                 <div>
                   {results.map((result, index) => (
                     <div key={index} className="text-white rounded-[30px] max-w-container mx-auto" style={{ backgroundColor: '#101568' }}>
-                      <div className="max-w-container mx-auto px-6 md:px-10 lg:px-9 laptop:px-[60px] py-6 md:py-8 lg:py-6 laptop:py-[30px]">
+                      <div className="max-w-container mx-auto px-6 md:px-10 lg:px-9 laptop:px-[60px] pt-6 md:pt-8 lg:pt-6 laptop:pt-[30px] pb-6 md:pb-8 lg:pb-6 laptop:pb-[30px]">
                         <div className={`grid gap-4 md:gap-6 lg:gap-8 laptop:gap-[50px] grid-cols-1 sm:grid-cols-2 ${inflationEnabled ? 'md:grid-cols-5' : 'md:grid-cols-4'}`}>
                           <div className="space-y-1">
                             <div className="text-[18px] font-medium opacity-80 whitespace-nowrap">Инструмент</div>
@@ -269,13 +272,13 @@ export default function ProfitabilityPage() {
 
                           <div className="space-y-1">
                             <div className="text-[18px] font-medium opacity-80 whitespace-nowrap">Доход, %</div>
-                            <div className="text-[28px] font-semibold whitespace-nowrap">{result.profitPercentage.toFixed(2)} %</div>
+                            <div className="text-[28px] font-semibold whitespace-nowrap">{formatDecimal(result.profitPercentage)} %</div>
                           </div>
 
                           {inflationEnabled && result.inflationAdjustedProfit !== undefined && (
                             <div className="space-y-1">
                               <div className="text-[18px] font-medium opacity-80 whitespace-nowrap">Реальный доход, %</div>
-                              <div className="text-[28px] font-semibold whitespace-nowrap">{result.inflationAdjustedProfit.toFixed(2)} %</div>
+                              <div className="text-[28px] font-semibold whitespace-nowrap">{formatDecimal(result.inflationAdjustedProfit)} %</div>
                             </div>
                           )}
                         </div>
@@ -295,6 +298,9 @@ export default function ProfitabilityPage() {
                   monthlyChartData={monthlyChartData}
                 />
               )}
+              
+              {/* Блок предложений */}
+              <OffersBlock type="investment" />
             </div>
           </div>
         </div>
